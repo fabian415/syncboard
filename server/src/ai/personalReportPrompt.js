@@ -48,7 +48,7 @@ const EXAMPLE_OUTPUT = `<h1>🚀 TungYi｜DeviceOn</h1>
 </div>
 <!-- SLIDE -->
 <h1>📋 DeviceOn 下週計畫與討論</h1>
-<h2>1. 下週計畫 (Todo)</h2>
+<h2>1. 下週計畫 (Ongoing/Todo)</h2>
 <ul>
   <li>第三方金流串接（預計 8/15）</li>
   <li>撰寫效能測試報告</li>

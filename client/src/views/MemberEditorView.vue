@@ -28,7 +28,7 @@ const member = computed(() => projects.detail?.members.find((m) => m.userId === 
 
 onMounted(async () => {
   try {
-    await projects.loadDetail(projectId);
+    await projects.loadDetail(projectId, date);
     if (!member.value) return;
 
     await report.load(projectId, userId, date);
