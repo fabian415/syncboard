@@ -30,7 +30,7 @@ function changeDate() {
     <div class="flex items-center justify-between flex-wrap gap-3">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">專案總覽</h1>
-        <p class="mt-1 text-sm text-gray-500">會議日期：{{ period }}｜請選擇一個專案以查看本期的 AI 統整簡報與團隊進度。</p>
+        <p class="mt-1 text-sm text-gray-500">會議日期：{{ period }}｜請選擇一個專案以查看本期的統整匯報與團隊進度。</p>
       </div>
     </div>
 

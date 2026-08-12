@@ -160,7 +160,7 @@ function editMember(member) {
       <div>
         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
           <Users class="w-5 h-5 mr-2 text-gray-500" />
-          團隊成員報告詳情
+          團隊成員報告
         </h3>
         <div v-if="uploadedMembers.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-sm text-gray-500">
           目前還沒有成員上傳本期報告。

@@ -6,6 +6,7 @@ import ProjectDetailView from '../views/ProjectDetailView.vue';
 import MemberEditorView from '../views/MemberEditorView.vue';
 import MemberListView from '../views/MemberListView.vue';
 import MyReportView from '../views/MyReportView.vue';
+import ReleaseNotesView from '../views/ReleaseNotesView.vue';
 
 const routes = [
   {
@@ -18,6 +19,7 @@ const routes = [
       { path: 'projects/:projectId/members/:userId', name: 'member-editor', component: MemberEditorView },
       { path: 'members', name: 'members', component: MemberListView },
       { path: 'members/:userId/report', name: 'my-report', component: MyReportView },
+      { path: 'release-notes', name: 'release-notes', component: ReleaseNotesView },
     ],
   },
 ];

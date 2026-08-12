@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { projectsRouter } from './modules/projects/projects.routes.js';
 import { membersRouter } from './modules/memberReports/memberReports.routes.js';
 import { meetingDatesRouter } from './modules/meetingDates/meetingDates.routes.js';
+import { versionRouter } from './modules/version/version.routes.js';
 import { env } from './config/env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,7 @@ export function createApp() {
   app.use('/api/projects', projectsRouter);
   app.use('/api/members', membersRouter);
   app.use('/api/meeting-dates', meetingDatesRouter);
+  app.use('/api/version', versionRouter);
 
   app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Not Found' });
