@@ -1,0 +1,111 @@
+.presentation-slide {
+  font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background: white;
+  color: #24292e;
+  width: min(1500px, 94vw);
+  height: min(86vh, 920px);
+  padding: 56px 72px;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.55);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #c8ccd1 transparent;
+}
+.presentation-slide::-webkit-scrollbar {
+  width: 8px;
+}
+.presentation-slide::-webkit-scrollbar-thumb {
+  background: #d0d7de;
+  border-radius: 4px;
+}
+.presentation-slide::-webkit-scrollbar-track {
+  background: transparent;
+}
+.presentation-slide h1 {
+  color: #0366d6;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+.presentation-slide h2 {
+  color: #24292e;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-bottom: 2px solid #e1e4e8;
+  padding-bottom: 8px;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+.presentation-slide h2:first-of-type {
+  margin-top: 0;
+}
+.presentation-slide ul {
+  list-style-type: none;
+  padding-left: 0;
+  margin-bottom: 16px;
+}
+.presentation-slide li {
+  position: relative;
+  margin-bottom: 12px;
+  padding-left: 1.2em;
+  line-height: 1.6;
+  font-size: 1.15rem;
+}
+.presentation-slide li::before {
+  content: '•';
+  color: #0366d6;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+.presentation-slide strong {
+  color: #111;
+  font-weight: 600;
+}
+
+.presentation-slide .grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.presentation-slide .card {
+  background: #f6f8fa;
+  padding: 20px 24px;
+  border-radius: 8px;
+  border-left: 5px solid #0366d6;
+  margin-bottom: 20px;
+}
+.presentation-slide .card ul {
+  margin-bottom: 0;
+}
+.presentation-slide .card li:last-child {
+  margin-bottom: 0;
+}
+
+.presentation-slide .warning {
+  border-left-color: #d73a49;
+  background: #ffeef0;
+}
+
+.presentation-slide .kms-link {
+  margin-top: auto;
+  border-top: 1px dashed #e1e4e8;
+  padding-top: 16px;
+  font-size: 0.95rem;
+}
+.presentation-slide .kms-link li::before {
+  content: '🔗';
+  color: #586069;
+  font-size: 0.9rem;
+}
+.presentation-slide .kms-link a {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 500;
+}
+.presentation-slide .kms-link a:hover {
+  text-decoration: underline;
+}

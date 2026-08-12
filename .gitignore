@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+*.env
+!.env.example
+
+# Report content is user data, not source — keep the folder structure only
+storage/**
+!storage/.gitkeep
+
+# Prisma
+server/prisma/dev.db
+
+npm-debug.log*
+.DS_Store
+
+server/.env
+server/node_modules/
+client/node_modules/
