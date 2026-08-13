@@ -28,6 +28,7 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/server ./server
 COPY --from=build /app/client/dist ./client/dist
+COPY version.txt release_notes.txt ./
 
 WORKDIR /app/server
 EXPOSE 3003

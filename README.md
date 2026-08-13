@@ -41,7 +41,6 @@ npm run prisma:seed
 | Physical AI | TungYi、Iris、Jim、Fabian |
 | GenAI Studio & LLM | Alex、Scott、Fabian |
 | DeviceOn | TungYi、Rafael、Scott、WunHuei、Fabian |
-| EPD | Fabian |
 | Project & Others | WunHuei、Iris、Fabian |
 
 （Fabian 為 MANAGER，其餘為 RD；種子腳本另外幫 Rafael、Alex 的「今天」各種了一筆範例報告內容，方便直接示範 AI Refactor / Combine。）

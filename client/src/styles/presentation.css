@@ -25,13 +25,13 @@
 }
 .presentation-slide h1 {
   color: #0366d6;
-  font-size: 2.2rem;
+  font-size: 2.6rem;
   font-weight: 700;
   margin-bottom: 24px;
 }
 .presentation-slide h2 {
   color: #24292e;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 600;
   border-bottom: 2px solid #e1e4e8;
   padding-bottom: 8px;
@@ -48,10 +48,10 @@
 }
 .presentation-slide li {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   padding-left: 1.2em;
   line-height: 1.6;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
 }
 .presentation-slide li::before {
   content: '•';
@@ -91,15 +91,13 @@
 }
 
 .presentation-slide .kms-link {
-  margin-top: auto;
-  border-top: 1px dashed #e1e4e8;
-  padding-top: 16px;
-  font-size: 0.95rem;
+  margin-top: 24px;
+  font-size: 1.1rem;
 }
 .presentation-slide .kms-link li::before {
   content: '🔗';
   color: #586069;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 .presentation-slide .kms-link a {
   color: #0366d6;
