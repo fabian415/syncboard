@@ -107,3 +107,47 @@
 .presentation-slide .kms-link a:hover {
   text-decoration: underline;
 }
+
+.presentation-slide .badge {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-right: 8px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.presentation-slide .badge-new-done {
+  background: #d4f7dc;
+  color: #027a2f;
+  box-shadow: 0 0 0 1px #4ade80, 0 0 10px rgba(74, 222, 128, 0.55);
+}
+
+.presentation-slide .badge-done {
+  background: #eef2f0;
+  color: #57705f;
+}
+
+.presentation-slide .badge-updated {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.presentation-slide .badge-new {
+  background: #fef9c3;
+  color: #854d0e;
+  box-shadow: 0 0 0 1px #facc15;
+}
+
+.presentation-slide .badge-wip {
+  background: #e0edff;
+  color: #1d4ed8;
+}
+
+.presentation-slide .badge-blocked {
+  background: #ffeef0;
+  color: #b91c1c;
+  border: 1.5px solid #d73a49;
+}

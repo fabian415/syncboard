@@ -1,15 +1,20 @@
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { CalendarClock } from 'lucide-vue-next';
 import { useProjectsStore } from '../stores/projects.js';
+import { usePresentationStore } from '../stores/presentation.js';
+import * as meetingStatusApi from '../api/meetingStatus.js';
 import ProjectCard from '../components/manager/ProjectCard.vue';
 
 const route = useRoute();
 const router = useRouter();
 const projects = useProjectsStore();
+const presentation = usePresentationStore();
 
 const PERIOD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const period = computed(() => (PERIOD_RE.test(route.query.period) ? route.query.period : null));
+const isLoadingMeetingStatus = ref(false);
 
 watch(
   period,
@@ -23,6 +28,27 @@ watch(
 function changeDate() {
   router.push('/');
 }
+
+function goToMeetingStatusEditor() {
+  router.push(`/meeting-status?period=${period.value}`);
+}
+
+async function playMeetingStatus() {
+  if (isLoadingMeetingStatus.value) return;
+  isLoadingMeetingStatus.value = true;
+  try {
+    const report = await meetingStatusApi.getMeetingStatus(period.value);
+    if (report.pages) {
+      presentation.open(report.pages, `會議總覽簡報｜${period.value}`, goToMeetingStatusEditor);
+    } else {
+      goToMeetingStatusEditor();
+    }
+  } catch {
+    goToMeetingStatusEditor();
+  } finally {
+    isLoadingMeetingStatus.value = false;
+  }
+}
 </script>
 
 <template>
@@ -32,6 +58,14 @@ function changeDate() {
         <h1 class="text-2xl font-bold text-gray-900">專案總覽</h1>
         <p class="mt-1 text-sm text-gray-500">會議日期：{{ period }}｜請選擇一個專案以查看本期的統整匯報與團隊進度。</p>
       </div>
+      <button
+        class="flex items-center px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium text-sm shadow-sm transition-colors shrink-0 disabled:opacity-60"
+        :disabled="isLoadingMeetingStatus"
+        @click="playMeetingStatus"
+      >
+        <CalendarClock class="w-4 h-4 mr-2" />
+        {{ isLoadingMeetingStatus ? '載入中...' : '會議總覽簡報' }}
+      </button>
     </div>
 
     <p v-if="projects.error" class="text-sm text-red-600">{{ projects.error }}</p>

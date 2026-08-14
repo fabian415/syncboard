@@ -72,6 +72,15 @@ model MemberReport {
   @@unique([userId, periodStart])
 }
 
+model MeetingStatusReport {
+  id           String   @id @default(uuid())
+  meetingDate  DateTime @unique @db.Date
+  markdownPath String
+  htmlPath     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model CombinedReport {
   id          String   @id @default(uuid())
   projectId   String

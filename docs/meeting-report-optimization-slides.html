@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>【團隊公告】Meeting 報告流程優化與 AI 輔助系統試行</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #5a6a7a;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --success: #059669;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --border: #e2e8f0;
+      --shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      overflow: hidden;
+    }
+
+    .deck {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: 48px 64px 80px;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    .slide-header {
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .slide-header .eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .slide-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .slide-header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Title slide */
+    .title-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(160deg, #f0f7ff 0%, #f7f9fc 50%, #f0fdf4 100%);
+    }
+
+    .title-slide .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+      letter-spacing: 0.03em;
+    }
+
+    .title-slide h1 {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.35;
+      max-width: 900px;
+      margin-bottom: 16px;
+    }
+
+    .title-slide .subtitle {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+
+    .title-slide .meta {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .title-slide .meta span {
+      background: var(--card);
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    /* Content elements */
+    p, li {
+      font-size: 17px;
+    }
+
+    .lead {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 900px;
+      margin-bottom: 24px;
+    }
+
+    .highlight {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .card.principle {
+      border-top: 3px solid var(--accent);
+    }
+
+    .card .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .card.warning {
+      background: var(--warning-bg);
+      border-color: #fde68a;
+    }
+
+    .list-clean {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .list-clean li {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .list-clean .icon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; }
+      .slide { padding: 32px 24px 72px; }
+    }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .flow-step .step-num {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .flow-step .step-body strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+
+    .flow-step .step-body span {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Template styles */
+    .template-box {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 18px 20px;
+      font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .template-box .comment {
+      color: #94a3b8;
+    }
+
+    .template-box .tag {
+      color: #38bdf8;
+    }
+
+    .note {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 15px;
+      color: var(--text);
+      margin-top: 16px;
+    }
+
+    .note.warning-note {
+      background: var(--warning-bg);
+      border-left-color: var(--warning);
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      width: 120px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.2s ease;
+    }
+
+    .keyboard-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    ul.bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    ul.bullets li::before {
+      content: "•";
+      color: var(--accent);
+      font-weight: 700;
+      margin-right: 10px;
+    }
+
+    .tag-pill {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-right: 6px;
+    }
+
+    .footer-note {
+      margin-top: auto;
+      padding-top: 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+
+    <!-- 1. Title -->
+    <section class="slide title-slide active" data-slide="0">
+      <div class="badge">團隊公告</div>
+      <h1>Meeting 報告流程優化<br>與 AI 輔助系統試行</h1>
+      <p class="subtitle">提升會議效率 · 強化簡報表達 · Productivity Enhancement</p>
+      <div class="meta">
+        <span>含 Markdown Template</span>
+        <span>雙週 Meeting 適用</span>
+        <span>首次試行：下週四 Rehearsal</span>
+      </div>
+    </section>
+
+    <!-- 2. Background -->
+    <section class="slide" data-slide="1">
+      <div class="slide-header">
+        <div class="eyebrow">背景與目的</div>
+        <h1>為什麼要調整報告方式？</h1>
+      </div>
+      <p class="lead">
+        為了提升會議效率並強化簡報表達，我們將調整雙週 Meeting 的報告方式。
+        考慮到 RD 親自製作投影片較為耗時，且文字敘述容易過於冗長，
+        此調整作為 <span class="highlight">Productivity Enhancement</span> 的一環。
+      </p>
+      <div class="card-grid">
+        <div class="card">
+          <h3>🤖 AI 輔助系統</h3>
+          <p>由 <strong>Fabian</strong> 透過 AI 開發輔助系統，優化報告產出流程，減少手動製作投影片的時間。</p>
+        </div>
+        <div class="card">
+          <h3>🔗 未來整合</h3>
+          <p>規劃與 <strong>MemoSynth 會議助理</strong> 整合，讓會議記錄與產出更加自動化。</p>
+        </div>
+      </div>
+      <div class="note" style="margin-top: 24px;">
+        以下為最新的會議流程、報告原則與 Markdown 範本，請大家參閱並協助配合。
+      </div>
+    </section>
+
+    <!-- 3. Three Principles -->
+    <section class="slide" data-slide="2">
+      <div class="slide-header">
+        <div class="eyebrow">報告原則</div>
+        <h1>🎯 報告三大核心原則</h1>
+      </div>
+      <div class="card-grid">
+        <div class="card principle">
+          <div class="num">1</div>
+          <h3>結論先講</h3>
+          <p>精準歸納結果，避免流水帳式敘述。先讓聽者掌握重點與結論。</p>
+        </div>
+        <div class="card principle">
+          <div class="num">2</div>
+          <h3>有 Demo 先跑</h3>
+          <p>優先展示實體成果或畫面。用實際產出說話，比文字更有說服力。</p>
+        </div>
+        <div class="card principle">
+          <div class="num">3</div>
+          <h3>細節擺後面</h3>
+          <p>技術細節或延伸討論放至會議最後階段，保持主報告節奏流暢。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Rehearsal -->
+    <section class="slide" data-slide="3">
+      <div class="slide-header">
+        <div class="eyebrow">開會流程</div>
+        <h1>📅 1. 預演機制（Rehearsal）</h1>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="section-label">內部預演</div>
+          <h3 style="margin-bottom: 10px;">每雙週的週四</h3>
+          <p style="color: var(--muted); font-size: 15px;">
+            即開會前一天進行內部 Rehearsal，確定報告重點與流暢度。
+            預演結束後開放自由討論。
+          </p>
+        </div>
+        <div class="card" style="border-left: 4px solid var(--accent);">
+          <div class="section-label">第一次試行</div>
+          <h3 style="margin-bottom: 10px;">下週四</h3>
+          <p style="color: var(--muted); font-size: 15px;">
+            我們將首次使用此流程與 Template 進行 Rehearsal，
+            <strong>請大家提前填寫測試</strong>。
+          </p>
+        </div>
+      </div>
+      <div class="note" style="margin-top: 28px;">
+        💡 預演目的：確保正式會議時報告簡潔、重點明確，並預留時間給討論與 Deep Dive。
+      </div>
+    </section>
+
+    <!-- 5. Friday Meeting Flow -->
+    <section class="slide" data-slide="4">
+      <div class="slide-header">
+        <div class="eyebrow">開會流程</div>
+        <h1>📅 2. 週五正式 Meeting 流程</h1>
+      </div>
+      <p class="lead" style="margin-bottom: 16px;">會議將統一使用投影片報告，議程如下：</p>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>Follow-up Items</strong>
+            <span>由 Sephiroth 進行追蹤事項說明</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Product Overall Status</strong>
+            <span>由 Alex 與 TungYi 針對目前三個 Product 的整體狀況進行 Summary</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>個人進度報告</strong>
+            <span>以 Product 為單位，每位同仁報告個人進度（每人 1–2 頁）</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>Deep Dive & 技術分享</strong>
+            <span>需深入探討的 Working Item、技術細節或 Knowledge Sharing，統一安排在此階段</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Submission -->
+    <section class="slide" data-slide="5">
+      <div class="slide-header">
+        <div class="eyebrow">開會流程</div>
+        <h1>📅 3. 簡報繳交方式</h1>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <h3>📤 目前方式</h3>
+          <p style="margin-top: 10px;">
+            請於會議討論前，將簡報放置於<br>
+            <strong>Teams Meeting Folder</strong><br>
+            或先傳給 <strong>Sephiroth</strong>。
+          </p>
+        </div>
+        <div class="card">
+          <h3>🚀 未來規劃</h3>
+          <p style="margin-top: 10px;">
+            待 AI 簡報系統開發完全後，將改為直接<br>
+            <strong>Attach 到該會議邀請</strong>中。
+          </p>
+        </div>
+      </div>
+      <div class="note warning-note" style="margin-top: 28px;">
+        請提前準備並繳交，方便預演與正式會議順利進行。
+      </div>
+    </section>
+
+    <!-- 7. Template Intro -->
+    <section class="slide" data-slide="6">
+      <div class="slide-header">
+        <div class="eyebrow">報告範本</div>
+        <h1>📝 個人報告 Markdown Template</h1>
+      </div>
+      <p class="lead">
+        請大家試著填寫下方 Template，系統會自動轉換為結構化簡報。
+      </p>
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="section-label">Header 範例</div>
+        <p style="font-family: monospace; font-size: 15px; margin-top: 6px;">
+          # 🚀 Presenter：[TungYi]｜雙週報 [2026-08-21]<br>
+          &gt; 本週涵蓋 Product：`DeviceOn`、`GenAI Studio`
+        </p>
+      </div>
+      <div class="card-grid">
+        <div class="card">
+          <h3>Required</h3>
+          <p>核心重點（Key Highlights）至多 5 項，貢獻度最高的擺前面。超過部分簡報將不呈現。</p>
+        </div>
+        <div class="card">
+          <h3>Optional</h3>
+          <p>補充說明、下週計畫、討論／阻礙、相關連結／附件，依需求填寫。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Template Structure -->
+    <section class="slide" data-slide="7">
+      <div class="slide-header">
+        <div class="eyebrow">報告範本</div>
+        <h1>Template 區塊結構</h1>
+      </div>
+      <p class="lead" style="margin-bottom: 12px;">每個 Product 可重複以下區塊：</p>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">📦</div>
+          <div class="step-body">
+            <strong>Product 標題</strong>
+            <span>## 📦 Product：DeviceOn</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">★</div>
+          <div class="step-body">
+            <strong>核心重點 (Key Highlights) — Required</strong>
+            <span>至多 5 項，貢獻度最高的擺前面</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">i</div>
+          <div class="step-body">
+            <strong>項目的補充說明 — Optional</strong>
+            <span>為什麼要做？背景與價值</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">→</div>
+          <div class="step-body">
+            <strong>下週計畫 (Ongoing / To-do) — Optional</strong>
+            <span>Checklist 形式</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">🔥</div>
+          <div class="step-body">
+            <strong>討論 / 阻礙 — Optional</strong>
+            <span>非技術層面，偏向組織／資源問題</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">🔗</div>
+          <div class="step-body">
+            <strong>相關連結／附件 — Optional</strong>
+            <span>Confluence、Jira 等</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. Example DeviceOn -->
+    <section class="slide" data-slide="8">
+      <div class="slide-header">
+        <div class="eyebrow">範例</div>
+        <h1>📦 Product：DeviceOn（範例）</h1>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="section-label">核心重點 (Key Highlights)</div>
+          <ul class="list-clean" style="margin-bottom: 16px;">
+            <li><span class="icon">1</span><div><strong>[功能/模組]</strong> 完成支付 API 重構，降低 30% 延遲</div></li>
+            <li><span class="icon">2</span><div><strong>[修復/優化]</strong> 解決 Deadlock 問題</div></li>
+            <li><span class="icon">3</span><div><strong>[上線]</strong> v2.1.0 發布</div></li>
+          </ul>
+          <div class="section-label">下週計畫</div>
+          <ul class="bullets">
+            <li>第三方金流串接（預計 8/15）</li>
+            <li>撰寫效能測試報告</li>
+          </ul>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom: 12px;">
+            <div class="section-label">補充說明</div>
+            <p style="font-size: 14px; margin-top: 6px;"><strong>背景/痛點：</strong>為了符合歐盟 CRA 規範，DeviceOn 必須將 JDK 升級至 17，生成 SBOM 並進行 CVE 漏洞比對與修復。</p>
+            <p style="font-size: 14px; margin-top: 8px;"><strong>價值：</strong>提升軟體安全性，符合 CRA 規範需求。</p>
+          </div>
+          <div class="card warning">
+            <div class="section-label">🔥 討論 / 阻礙</div>
+            <p style="font-size: 14px; margin-top: 6px;"><strong>討論議題：</strong>與 Frontend 確認 Auth Token 過期機制</p>
+            <p style="font-size: 14px; margin-top: 6px;"><strong>阻礙：</strong>需要 DBA 協助開立 Prod 唯讀權限</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. Example GenAI + Others -->
+    <section class="slide" data-slide="9">
+      <div class="slide-header">
+        <div class="eyebrow">範例</div>
+        <h1>📦 GenAI Studio & 其他事項</h1>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="section-label">Product：GenAI Studio</div>
+          <p style="font-size: 15px; margin: 8px 0;"><strong>核心重點</strong></p>
+          <ul class="bullets" style="margin-bottom: 12px;">
+            <li>[功能] 完成訂單狀態機重構</li>
+            <li>[優化] 查詢 API 回應時間從 800ms 降至 220ms</li>
+          </ul>
+          <p style="font-size: 14px; color: var(--muted);"><strong>價值：</strong>降低後續功能開發時間約 40%</p>
+          <p style="font-size: 14px; margin-top: 10px;"><strong>下週計畫：</strong>補齊單元測試覆蓋率至 80%；與 QA 對接回歸測試案例</p>
+        </div>
+        <div class="card">
+          <div class="section-label">🌐 其他事項</div>
+          <p style="font-size: 14px; color: var(--muted); margin: 8px 0 12px;">Event Support or Other Projects</p>
+          <ul class="bullets">
+            <li>協助新人 Onboarding（Product-A 與 Product-B 架構）</li>
+            <li>參與技術分享：如何設計可觀測性（Observability）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note" style="margin-top: 20px;">
+        多個 Product 時可重複 Product 區塊；最後以「其他事項」收尾即可。
+      </div>
+    </section>
+
+    <!-- 11. Summary / Action -->
+    <section class="slide" data-slide="10">
+      <div class="slide-header">
+        <div class="eyebrow">總結</div>
+        <h1>請大家配合事項</h1>
+      </div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>記住三大原則</strong>
+            <span>結論先講 · 有 Demo 先跑 · 細節擺後面</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>下週四首次 Rehearsal</strong>
+            <span>請提前使用 Template 填寫並測試</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>正式會議依新流程進行</strong>
+            <span>Follow-up → Product Status → 個人報告（1–2 頁）→ Deep Dive</span>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>簡報繳交</strong>
+            <span>會議前放置於 Teams Meeting Folder 或傳給 Sephiroth</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">
+        如有問題，請與 Fabian / Sephiroth 聯繫。感謝大家配合！
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← 上一頁</button>
+    <div class="progress">
+      <span id="pageInfo">1 / 11</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 9.09%"></div></div>
+      <span class="keyboard-hint">← → 或空白鍵切換</span>
+    </div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一頁 →</button>
+  </nav>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let current = 0;
+
+    function showSlide(index) {
+      if (index < 0 || index >= total) return;
+      slides[current].classList.remove('active');
+      current = index;
+      slides[current].classList.add('active');
+      document.getElementById('pageInfo').textContent = (current + 1) + ' / ' + total;
+      document.getElementById('progressFill').style.width = ((current + 1) / total * 100) + '%';
+      document.getElementById('prevBtn').disabled = current === 0;
+      document.getElementById('nextBtn').disabled = current === total - 1;
+    }
+
+    function changeSlide(delta) {
+      showSlide(current + delta);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        changeSlide(1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        changeSlide(-1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(total - 1);
+      }
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+      const diff = e.changedTouches[0].screenX - touchStartX;
+      if (Math.abs(diff) > 50) {
+        changeSlide(diff < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+
+    showSlide(0);
+  </script>
+</body>
+</html>

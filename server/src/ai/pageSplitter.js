@@ -16,9 +16,9 @@ export function parseSlides(content) {
   return pages;
 }
 
-export function validateSlides(pages) {
-  if (pages.length < 1 || pages.length > 2) {
-    throw new InvalidSlidesError(`Expected 1-2 slides, got ${pages.length}`);
+export function validateSlides(pages, { min = 1, max = 2 } = {}) {
+  if (pages.length < min || pages.length > max) {
+    throw new InvalidSlidesError(`Expected ${min}-${max} slides, got ${pages.length}`);
   }
   for (const page of pages) {
     if (!HEADING_RE.test(page)) {

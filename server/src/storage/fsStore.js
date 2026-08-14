@@ -65,6 +65,19 @@ export function memberReportMarkdownPath(userName, periodStart) {
   return path.join(memberReportDir(userName, periodStart), 'report.md');
 }
 
+export function meetingStatusDir(date) {
+  assertValidDate(date);
+  return path.join(STORAGE_ROOT, '_meeting-status', date);
+}
+
+export function meetingStatusMarkdownPath(date) {
+  return path.join(meetingStatusDir(date), 'report.md');
+}
+
+export function meetingStatusHtmlPath(date) {
+  return path.join(meetingStatusDir(date), 'presentation.html');
+}
+
 export function combinedDir(projectName, date) {
   const project = assertValidName(projectName, 'projectName');
   assertValidDate(date);

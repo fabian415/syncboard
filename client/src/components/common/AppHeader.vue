@@ -47,8 +47,11 @@ onMounted(async () => {
         <router-link :to="`/projects?period=${period}`" class="text-gray-500 hover:text-gray-900 transition-colors" active-class="text-blue-600">
           專案列表
         </router-link>
+        <router-link :to="`/meeting-status?period=${period}`" class="text-gray-500 hover:text-gray-900 transition-colors" active-class="text-blue-600">
+          整體進度
+        </router-link>
         <router-link :to="`/members?period=${period}`" class="text-gray-500 hover:text-gray-900 transition-colors" active-class="text-blue-600">
-          我的報告
+          成員報告
         </router-link>
       </nav>
     </div>
