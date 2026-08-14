@@ -61,6 +61,15 @@ export async function saveSectionHandler(req, res, next) {
   }
 }
 
+export async function getShowcaseProjectPlaylistHandler(req, res, next) {
+  try {
+    const playlist = await meetingStatusService.getShowcaseProjectPlaylist(req.params.date, req.params.projectId);
+    res.json({ playlist });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getSectionPresentationHandler(req, res, next) {
   try {
     const report = await meetingStatusService.getSectionPresentation(req.params.date, req.params.sectionKey);

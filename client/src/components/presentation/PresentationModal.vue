@@ -42,11 +42,24 @@ watch(
   },
 );
 
+const isAtFirstDeckPage = () => currentPage.value === 0 && !presentation.hasPrevDeck;
+const isAtLastDeckPage = () => currentPage.value === presentation.pages.length - 1 && !presentation.hasNextDeck;
+
 function prev() {
-  currentPage.value = Math.max(currentPage.value - 1, 0);
+  if (currentPage.value > 0) {
+    currentPage.value -= 1;
+  } else if (presentation.hasPrevDeck) {
+    presentation.goToDeck(presentation.deckIndex - 1);
+    currentPage.value = presentation.pages.length - 1;
+  }
 }
 function next() {
-  currentPage.value = Math.min(currentPage.value + 1, presentation.pages.length - 1);
+  if (currentPage.value < presentation.pages.length - 1) {
+    currentPage.value += 1;
+  } else if (presentation.hasNextDeck) {
+    presentation.goToDeck(presentation.deckIndex + 1);
+    currentPage.value = 0;
+  }
 }
 
 async function toggleFullscreen() {
@@ -139,7 +152,7 @@ onUnmounted(() => {
     </div>
 
     <div class="presentation-navbar flex items-center justify-between px-6 py-3 border-t">
-      <button class="presentation-nav-btn" :disabled="currentPage === 0" @click="prev">← 上一頁</button>
+      <button class="presentation-nav-btn" :disabled="isAtFirstDeckPage()" @click="prev">← 上一頁</button>
       <div class="flex items-center gap-3">
         <span class="presentation-page-info">{{ currentPage + 1 }} / {{ presentation.pages.length }}</span>
         <div class="presentation-progress-bar">
@@ -152,7 +165,7 @@ onUnmounted(() => {
       </div>
       <button
         class="presentation-nav-btn"
-        :disabled="currentPage === presentation.pages.length - 1"
+        :disabled="isAtLastDeckPage()"
         @click="next"
       >
         下一頁 →

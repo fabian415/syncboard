@@ -28,6 +28,10 @@ export function getSectionPresentation(date, sectionKey) {
   return http.get(`/meeting-status/${date}/sections/${sectionKey}/presentation`).then((res) => res.data.report);
 }
 
+export function getShowcaseProjectPlaylist(date, projectId) {
+  return http.get(`/meeting-status/${date}/showcase/projects/${projectId}/playlist`).then((res) => res.data.playlist);
+}
+
 export function refactorSection(date, sectionKey) {
   return http.post(`/meeting-status/${date}/sections/${sectionKey}/refactor`).then((res) => res.data);
 }

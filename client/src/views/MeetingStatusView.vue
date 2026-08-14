@@ -1,82 +1,27 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { CalendarClock, Sparkles, PlayCircle, Pencil, ListChecks, Folder, Presentation } from 'lucide-vue-next';
+import { CalendarClock, ListChecks, Folder, Presentation } from 'lucide-vue-next';
 import { useMeetingStatusStore } from '../stores/meetingStatus.js';
-import { usePresentationStore } from '../stores/presentation.js';
-import { useUiStore } from '../stores/ui.js';
 import { todayISO } from '../utils/date.js';
-import { serializeSlides } from '../utils/slides.js';
-import HtmlSourceEditor from '../components/rd/HtmlSourceEditor.vue';
 import StatusCard from '../components/manager/StatusCard.vue';
 
 const route = useRoute();
 const router = useRouter();
 const meetingStatus = useMeetingStatusStore();
-const presentation = usePresentationStore();
-const ui = useUiStore();
 
 const PERIOD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const date = PERIOD_RE.test(route.query.period) ? route.query.period : todayISO();
 
 const isInitialLoading = ref(true);
-const showHtmlEditor = ref(false);
-const htmlDraft = ref('');
-const htmlSaveMessage = ref('');
-const isSavingHtml = ref(false);
 
 onMounted(async () => {
   try {
     await meetingStatus.loadOverview(date);
-    if (meetingStatus.htmlPages) htmlDraft.value = serializeSlides(meetingStatus.htmlPages);
   } finally {
     isInitialLoading.value = false;
   }
 });
-
-watch(
-  () => meetingStatus.htmlPages,
-  (pages) => {
-    htmlDraft.value = pages ? serializeSlides(pages) : '';
-  },
-);
-
-function openHtmlEditor() {
-  htmlDraft.value = meetingStatus.htmlPages ? serializeSlides(meetingStatus.htmlPages) : '';
-  showHtmlEditor.value = true;
-}
-
-async function saveHtmlDraft() {
-  isSavingHtml.value = true;
-  htmlSaveMessage.value = '';
-  try {
-    await meetingStatus.saveHtml(date, htmlDraft.value);
-    htmlSaveMessage.value = '已儲存';
-    setTimeout(() => (htmlSaveMessage.value = ''), 2000);
-  } catch {
-    // meetingStatus.error already set for display
-  } finally {
-    isSavingHtml.value = false;
-  }
-}
-
-function playPresentation() {
-  if (!meetingStatus.htmlPages) return;
-  presentation.open(meetingStatus.htmlPages, `整體進度簡報｜${date}`, openHtmlEditor);
-}
-
-async function handleGenerate() {
-  if (ui.isLoading) return;
-  ui.start('✨ AI 正在依整體進度整理簡報...');
-  try {
-    const pages = await meetingStatus.refactor(date);
-    presentation.open(pages, `整體進度簡報｜${date}`, openHtmlEditor);
-  } catch {
-    // meetingStatus.error already set for display
-  } finally {
-    ui.stop();
-  }
-}
 
 function goToFollowUp() {
   router.push(`/meeting-status/follow-up?period=${date}`);
@@ -103,59 +48,7 @@ function goToProject(projectId) {
 
       <div class="flex items-center gap-2">
         <span v-if="meetingStatus.error" class="text-xs text-red-600">{{ meetingStatus.error }}</span>
-
-        <button
-          v-if="meetingStatus.htmlPages"
-          class="flex items-center px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-xs"
-          @click="playPresentation"
-        >
-          <PlayCircle class="w-3.5 h-3.5 mr-1.5" />
-          簡報放映
-        </button>
-
-        <button
-          class="relative group overflow-hidden rounded-lg p-[1.5px] disabled:opacity-60 disabled:pointer-events-none"
-          :disabled="ui.isLoading"
-          @click="handleGenerate"
-        >
-          <span class="absolute inset-0 bg-gradient-to-r from-blue-500 via-teal-500 to-green-500 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></span>
-          <div class="relative flex items-center px-3.5 py-1.5 bg-white rounded-md group-hover:bg-opacity-95 transition-all duration-300">
-            <Sparkles class="w-4 h-4 mr-1.5 text-teal-600 group-hover:scale-110 transition-transform" />
-            <span class="font-bold text-sm bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-teal-600">
-              AI 產生會議簡報
-            </span>
-          </div>
-        </button>
       </div>
-    </div>
-
-    <button
-      v-if="meetingStatus.htmlPages && !showHtmlEditor"
-      class="flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors self-start"
-      @click="openHtmlEditor"
-    >
-      <Pencil class="w-3.5 h-3.5 mr-1.5" />
-      編輯簡報 HTML
-    </button>
-
-    <div v-if="showHtmlEditor" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
-      <div class="flex items-center justify-between">
-        <h4 class="text-sm font-bold text-gray-700">編輯簡報 HTML</h4>
-        <div class="flex items-center space-x-3">
-          <span v-if="htmlSaveMessage" class="text-sm text-green-600">{{ htmlSaveMessage }}</span>
-          <button
-            class="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium disabled:opacity-60"
-            :disabled="isSavingHtml"
-            @click="saveHtmlDraft"
-          >
-            {{ isSavingHtml ? '儲存中...' : '儲存' }}
-          </button>
-          <button class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-700 text-sm font-medium" @click="showHtmlEditor = false">
-            收合
-          </button>
-        </div>
-      </div>
-      <HtmlSourceEditor v-model="htmlDraft" />
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -175,8 +68,8 @@ function goToProject(projectId) {
         :title="project.name"
         :description="project.description"
         :progress="{
-          current: project.submittedCount + (project.hasContent ? 1 : 0),
-          total: project.memberCount + 1,
+          current: project.generatedCount + (project.sectionGenerated ? 1 : 0),
+          total: project.memberCount + (project.hasContent ? 1 : 0),
         }"
         @click="goToProject(project.projectId)"
       />

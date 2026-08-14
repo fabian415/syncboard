@@ -17,7 +17,6 @@ const period = computed(() => (PERIOD_RE.test(route.query.period) ? route.query.
 // default active-class prefix matching can't mark the nav item active while
 // browsing them. Group by route name instead so the nav stays highlighted
 // throughout each section.
-const PROJECTS_ROUTES = ['projects', 'project-detail', 'member-editor'];
 const MEETING_STATUS_ROUTES = [
   'meeting-status',
   'meeting-status-follow-up',
@@ -25,10 +24,11 @@ const MEETING_STATUS_ROUTES = [
   'meeting-status-project-edit',
 ];
 const MEMBERS_ROUTES = ['members', 'my-report'];
+const SHOWCASE_ROUTES = ['showcase'];
 
-const isProjectsActive = computed(() => PROJECTS_ROUTES.includes(route.name));
 const isMeetingStatusActive = computed(() => MEETING_STATUS_ROUTES.includes(route.name));
 const isMembersActive = computed(() => MEMBERS_ROUTES.includes(route.name));
+const isShowcaseActive = computed(() => SHOWCASE_ROUTES.includes(route.name));
 
 const version = ref('');
 
@@ -63,11 +63,11 @@ onMounted(async () => {
       </div>
       <nav v-if="showNav" class="flex items-center space-x-1 text-sm font-medium">
         <router-link
-          :to="`/projects?period=${period}`"
+          :to="`/showcase?period=${period}`"
           class="px-3 py-1.5 rounded-lg transition-colors"
-          :class="isProjectsActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
+          :class="isShowcaseActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
         >
-          專案列表
+          成果展示
         </router-link>
         <router-link
           :to="`/meeting-status?period=${period}`"

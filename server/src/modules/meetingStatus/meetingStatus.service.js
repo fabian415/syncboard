@@ -1,6 +1,7 @@
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
-import { listMemberUserIds } from '../projects/projects.service.js';
+import { listMemberUserIds, getProjectDetail } from '../projects/projects.service.js';
+import { getMemberReport } from '../reports/reports.service.js';
 import {
   assertValidDate,
   meetingStatusMarkdownPath,
@@ -139,10 +140,10 @@ export async function getOverview(date) {
     projects: await Promise.all(
       projects.map(async (project) => {
         const row = rowByKey.get(projectSectionKey(project.id));
-        const [memberUserIds, submittedCount] = await Promise.all([
+        const [memberUserIds, generatedCount] = await Promise.all([
           listMemberUserIds(project.id, date),
           prisma.report.count({
-            where: { projectId: project.id, reportDate: new Date(date), status: 'SUBMITTED' },
+            where: { projectId: project.id, reportDate: new Date(date), htmlPath: { not: null } },
           }),
         ]);
         return {
@@ -151,9 +152,10 @@ export async function getOverview(date) {
           description: project.description,
           tag: project.tag,
           hasContent: !!row,
+          sectionGenerated: row?.htmlPath != null,
           updatedAt: row?.updatedAt ?? null,
           memberCount: memberUserIds.length,
-          submittedCount,
+          generatedCount,
         };
       }),
     ),
@@ -227,6 +229,29 @@ export async function getSectionPresentation(date, sectionKey) {
     pages: htmlContent ? parseSlides(htmlContent) : null,
     updatedAt: row?.htmlPath ? row.updatedAt : null,
   };
+}
+
+export async function getShowcaseProjectPlaylist(date, projectId) {
+  assertValidDate(date);
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new HttpError(404, 'Project not found');
+
+  const [{ pages: sectionPages }, detail] = await Promise.all([
+    getSectionPresentation(date, projectSectionKey(project.id)),
+    getProjectDetail(project.id, date),
+  ]);
+
+  const presentedMembers = detail.members.filter((m) => m.hasPresentation);
+  const members = (
+    await Promise.all(
+      presentedMembers.map(async (member) => {
+        const { htmlPages } = await getMemberReport(project.id, member.userId, date);
+        return htmlPages ? { userId: member.userId, name: member.name, pages: htmlPages } : null;
+      }),
+    )
+  ).filter(Boolean);
+
+  return { projectId: project.id, name: project.name, tag: project.tag, sectionPages, members };
 }
 
 export async function refactorSection(date, sectionKey) {

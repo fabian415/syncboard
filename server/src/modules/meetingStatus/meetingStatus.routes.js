@@ -7,6 +7,7 @@ import {
   getSectionHandler,
   saveSectionHandler,
   getSectionPresentationHandler,
+  getShowcaseProjectPlaylistHandler,
   refactorSectionHandler,
   saveSectionHtmlHandler,
   saveHtmlHandler,
@@ -17,6 +18,7 @@ export const meetingStatusRouter = Router();
 
 meetingStatusRouter.get('/:date', getPresentationHandler);
 meetingStatusRouter.get('/:date/overview', getOverviewHandler);
+meetingStatusRouter.get('/:date/showcase/projects/:projectId/playlist', getShowcaseProjectPlaylistHandler);
 meetingStatusRouter.get('/:date/header', getHeaderHandler);
 meetingStatusRouter.put('/:date/header', saveHeaderHandler);
 meetingStatusRouter.get('/:date/sections/:sectionKey', getSectionHandler);

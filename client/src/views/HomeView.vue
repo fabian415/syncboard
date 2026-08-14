@@ -6,7 +6,7 @@ import MeetingDateGate from '../components/common/MeetingDateGate.vue';
 const router = useRouter();
 
 function onConfirmDate(date) {
-  router.push(`/projects?period=${date}`);
+  router.push(`/showcase?period=${date}`);
 }
 </script>
 
@@ -24,7 +24,7 @@ function onConfirmDate(date) {
 
     <MeetingDateGate
       heading="選擇會議日期"
-      subheading="請先選擇要查看的會議日期，即可進入專案列表與我的報告。"
+      subheading="請先選擇要查看的會議日期，即可進入成果展示與我的報告。"
       @confirm="onConfirmDate"
     />
   </div>
