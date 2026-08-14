@@ -81,6 +81,18 @@ model MeetingStatusReport {
   updatedAt    DateTime @updatedAt
 }
 
+model MeetingStatusSection {
+  id           String   @id @default(uuid())
+  meetingDate  DateTime @db.Date
+  sectionKey   String
+  markdownPath String
+  htmlPath     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([meetingDate, sectionKey])
+}
+
 model CombinedReport {
   id          String   @id @default(uuid())
   projectId   String

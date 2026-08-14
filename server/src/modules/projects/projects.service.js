@@ -8,7 +8,7 @@ function todayISO() {
 // A project's members aren't a separate roster anymore — anyone who has
 // saved a Report for the project in the selected period counts, so
 // membership is scoped per period instead of being a lifetime roster.
-async function listMemberUserIds(projectId, date) {
+export async function listMemberUserIds(projectId, date) {
   const rows = await prisma.report.findMany({
     where: { projectId, reportDate: new Date(date) },
     distinct: ['userId'],

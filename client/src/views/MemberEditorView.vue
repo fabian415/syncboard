@@ -76,7 +76,7 @@ function openPreview() {
       <div class="flex items-start gap-3">
         <button
           class="p-2 -ml-2 mt-1 rounded-full hover:bg-gray-200 text-gray-600 transition-colors shrink-0"
-          @click="router.push(`/projects/${projectId}?period=${date}`)"
+          @click="router.back()"
         >
           <ArrowLeft class="w-5 h-5" />
         </button>
@@ -100,7 +100,7 @@ function openPreview() {
           class="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm"
           @click="openPreview"
         >
-          預覽簡報
+          簡報放映
         </button>
         <button
           class="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm disabled:opacity-60"

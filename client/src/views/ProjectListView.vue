@@ -37,9 +37,9 @@ async function playMeetingStatus() {
   if (isLoadingMeetingStatus.value) return;
   isLoadingMeetingStatus.value = true;
   try {
-    const report = await meetingStatusApi.getMeetingStatus(period.value);
+    const report = await meetingStatusApi.getPresentation(period.value);
     if (report.pages) {
-      presentation.open(report.pages, `會議總覽簡報｜${period.value}`, goToMeetingStatusEditor);
+      presentation.open(report.pages, `整體進度簡報｜${period.value}`, goToMeetingStatusEditor);
     } else {
       goToMeetingStatusEditor();
     }
@@ -64,7 +64,7 @@ async function playMeetingStatus() {
         @click="playMeetingStatus"
       >
         <CalendarClock class="w-4 h-4 mr-2" />
-        {{ isLoadingMeetingStatus ? '載入中...' : '會議總覽簡報' }}
+        {{ isLoadingMeetingStatus ? '載入中...' : '整體進度簡報' }}
       </button>
     </div>
 

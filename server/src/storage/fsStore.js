@@ -78,6 +78,14 @@ export function meetingStatusHtmlPath(date) {
   return path.join(meetingStatusDir(date), 'presentation.html');
 }
 
+export function meetingStatusSectionMarkdownPath(date, sectionKey) {
+  return path.join(meetingStatusDir(date), 'sections', `${sectionKey}.md`);
+}
+
+export function meetingStatusSectionHtmlPath(date, sectionKey) {
+  return path.join(meetingStatusDir(date), 'sections', `${sectionKey}.html`);
+}
+
 export function combinedDir(projectName, date) {
   const project = assertValidName(projectName, 'projectName');
   assertValidDate(date);

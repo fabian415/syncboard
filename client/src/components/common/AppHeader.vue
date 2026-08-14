@@ -12,6 +12,24 @@ const NO_NAV_ROUTES = ['home', 'release-notes'];
 const showNav = computed(() => !NO_NAV_ROUTES.includes(route.name));
 const period = computed(() => (PERIOD_RE.test(route.query.period) ? route.query.period : todayISO()));
 
+// Detail/editor routes aren't path-nested under their section's list route
+// (e.g. /projects/:id isn't a child path of /projects), so vue-router's
+// default active-class prefix matching can't mark the nav item active while
+// browsing them. Group by route name instead so the nav stays highlighted
+// throughout each section.
+const PROJECTS_ROUTES = ['projects', 'project-detail', 'member-editor'];
+const MEETING_STATUS_ROUTES = [
+  'meeting-status',
+  'meeting-status-follow-up',
+  'meeting-status-project',
+  'meeting-status-project-edit',
+];
+const MEMBERS_ROUTES = ['members', 'my-report'];
+
+const isProjectsActive = computed(() => PROJECTS_ROUTES.includes(route.name));
+const isMeetingStatusActive = computed(() => MEETING_STATUS_ROUTES.includes(route.name));
+const isMembersActive = computed(() => MEMBERS_ROUTES.includes(route.name));
+
 const version = ref('');
 
 onMounted(async () => {
@@ -43,14 +61,26 @@ onMounted(async () => {
           v{{ version }}
         </router-link>
       </div>
-      <nav v-if="showNav" class="flex items-center space-x-6 text-sm font-medium">
-        <router-link :to="`/projects?period=${period}`" class="text-gray-500 hover:text-gray-900 transition-colors" active-class="text-blue-600">
+      <nav v-if="showNav" class="flex items-center space-x-1 text-sm font-medium">
+        <router-link
+          :to="`/projects?period=${period}`"
+          class="px-3 py-1.5 rounded-lg transition-colors"
+          :class="isProjectsActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
+        >
           專案列表
         </router-link>
-        <router-link :to="`/meeting-status?period=${period}`" class="text-gray-500 hover:text-gray-900 transition-colors" active-class="text-blue-600">
+        <router-link
+          :to="`/meeting-status?period=${period}`"
+          class="px-3 py-1.5 rounded-lg transition-colors"
+          :class="isMeetingStatusActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
+        >
           整體進度
         </router-link>
-        <router-link :to="`/members?period=${period}`" class="text-gray-500 hover:text-gray-900 transition-colors" active-class="text-blue-600">
+        <router-link
+          :to="`/members?period=${period}`"
+          class="px-3 py-1.5 rounded-lg transition-colors"
+          :class="isMembersActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
+        >
           成員報告
         </router-link>
       </nav>

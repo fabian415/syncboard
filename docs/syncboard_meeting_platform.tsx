@@ -553,7 +553,7 @@ export default function App() {
                                 : 'border-transparent text-gray-400 bg-gray-50 cursor-not-allowed'
                               }`}
                             >
-                              預覽簡報
+                              簡報放映
                             </button>
                           </div>
                         </div>

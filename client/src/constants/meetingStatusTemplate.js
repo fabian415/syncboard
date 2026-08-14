@@ -1,12 +1,5 @@
-export function buildMeetingStatusTemplate({ date }) {
-  return `# 📋 Meeting Overall Status｜${date}
-
-**主持人**：[姓名]
-**與會人員**：[成員 1, 成員 2, ...]
-
----
-
-## 1. Follow-up
+export function buildFollowUpTemplate() {
+  return `## 1. Follow-up
 
 * 項目 1｜**[事項名稱]**
   * Owner：[姓名]｜狀態：✅ Done
@@ -18,12 +11,11 @@ export function buildMeetingStatusTemplate({ date }) {
 
 > **補充說明**：
 > [整體性的補充說明，無則可刪除]
+`;
+}
 
----
-
-## 2. Product Overall Status
-
-### 🌐 [Product 名稱]
+export function buildProjectSectionTemplate({ projectName }) {
+  return `### 🌐 ${projectName}
 * **Owner**：[姓名]
 
 #### 📦 [子項目名稱]
