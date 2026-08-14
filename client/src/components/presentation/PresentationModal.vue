@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { Maximize2, Minimize2, X, Pencil } from 'lucide-vue-next';
 import { usePresentationStore } from '../../stores/presentation.js';
 
@@ -41,6 +41,10 @@ watch(
     else exitFullscreenIfActive();
   },
 );
+
+// Running page number across every merged deck, e.g. deck 2's page 1 after a
+// 3-page deck 1 is global page 4 — not deck-local page 1.
+const globalPageNumber = computed(() => presentation.pagesBeforeCurrentDeck + currentPage.value + 1);
 
 const isAtFirstDeckPage = () => currentPage.value === 0 && !presentation.hasPrevDeck;
 const isAtLastDeckPage = () => currentPage.value === presentation.pages.length - 1 && !presentation.hasNextDeck;
@@ -154,11 +158,11 @@ onUnmounted(() => {
     <div class="presentation-navbar flex items-center justify-between px-6 py-3 border-t">
       <button class="presentation-nav-btn" :disabled="isAtFirstDeckPage()" @click="prev">← 上一頁</button>
       <div class="flex items-center gap-3">
-        <span class="presentation-page-info">{{ currentPage + 1 }} / {{ presentation.pages.length }}</span>
+        <span class="presentation-page-info">{{ globalPageNumber }} / {{ presentation.totalPages }}</span>
         <div class="presentation-progress-bar">
           <div
             class="presentation-progress-fill"
-            :style="{ width: ((currentPage + 1) / presentation.pages.length) * 100 + '%' }"
+            :style="{ width: (globalPageNumber / presentation.totalPages) * 100 + '%' }"
           ></div>
         </div>
         <span class="presentation-hint hidden md:inline select-none">← → 切換頁面．Esc 關閉簡報</span>

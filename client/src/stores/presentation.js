@@ -14,6 +14,11 @@ export const usePresentationStore = defineStore('presentation', {
     deckCount: (state) => state.decks.length,
     hasPrevDeck: (state) => state.deckIndex > 0,
     hasNextDeck: (state) => state.deckIndex < state.decks.length - 1,
+    // Total slide count across every merged deck in the queue, not just the current deck.
+    totalPages: (state) => state.decks.reduce((sum, deck) => sum + deck.pages.length, 0),
+    // Number of pages in decks before the current one, used to compute the running page index.
+    pagesBeforeCurrentDeck: (state) =>
+      state.decks.slice(0, state.deckIndex).reduce((sum, deck) => sum + deck.pages.length, 0),
   },
   actions: {
     // Single-deck convenience wrapper kept for existing callers (still supports onEdit).
