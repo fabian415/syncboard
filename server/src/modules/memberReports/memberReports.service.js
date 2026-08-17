@@ -77,6 +77,32 @@ export async function getPersonalReport(userId, periodStart) {
   };
 }
 
+export async function listMemberReportArchiveEntries(userId) {
+  const userName = await resolveUserName(userId);
+
+  const rows = await prisma.memberReport.findMany({
+    where: { userId },
+    orderBy: { periodStart: 'asc' },
+  });
+  if (rows.length === 0) {
+    throw new HttpError(404, 'No reports found', '此成員尚無任何會議報告可下載');
+  }
+
+  const entries = [];
+  for (const row of rows) {
+    const periodStart = row.periodStart.toISOString().slice(0, 10);
+    const markdown = await readTextFile(memberReportMarkdownPath(userName, periodStart));
+    if (markdown != null) {
+      entries.push({ periodStart, markdown });
+    }
+  }
+  if (entries.length === 0) {
+    throw new HttpError(404, 'No reports found', '此成員尚無任何會議報告可下載');
+  }
+
+  return { userName, entries };
+}
+
 export async function saveMarkdown(userId, periodStart, markdown) {
   assertValidDate(periodStart);
   const userName = await resolveUserName(userId);

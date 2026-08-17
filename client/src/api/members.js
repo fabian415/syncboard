@@ -8,6 +8,10 @@ export function getPersonalReport(userId, periodStart) {
   return http.get(`/members/${userId}/report/${periodStart}`).then((res) => res.data.report);
 }
 
+export function downloadReportsArchive(userId) {
+  return http.get(`/members/${userId}/reports/archive`, { responseType: 'blob' });
+}
+
 export function savePersonalMarkdown(userId, periodStart, markdown) {
   return http.put(`/members/${userId}/report/${periodStart}/markdown`, { markdown }).then((res) => res.data);
 }
