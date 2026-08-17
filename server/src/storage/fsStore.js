@@ -109,3 +109,27 @@ export async function writeTextFile(filePath, content) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, content, 'utf-8');
 }
+
+// Renames a report/meeting-status folder in place (e.g. when a meeting date
+// is changed). Merges into an existing destination rather than clobbering it,
+// since the caller may be consolidating into a date that already has files.
+export async function moveDir(src, dest) {
+  if (src === dest) return;
+  const srcExists = await fs
+    .access(src)
+    .then(() => true)
+    .catch(() => false);
+  if (!srcExists) return;
+
+  await fs.mkdir(path.dirname(dest), { recursive: true });
+  const destExists = await fs
+    .access(dest)
+    .then(() => true)
+    .catch(() => false);
+  if (!destExists) {
+    await fs.rename(src, dest);
+  } else {
+    await fs.cp(src, dest, { recursive: true, force: true });
+    await fs.rm(src, { recursive: true, force: true });
+  }
+}

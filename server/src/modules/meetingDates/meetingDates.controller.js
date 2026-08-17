@@ -8,3 +8,13 @@ export async function listMeetingDatesHandler(req, res, next) {
     next(err);
   }
 }
+
+export async function renameMeetingDateHandler(req, res, next) {
+  try {
+    const { oldDate, newDate } = req.body;
+    const result = await meetingDatesService.renameMeetingDate(oldDate, newDate);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
