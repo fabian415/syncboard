@@ -25,7 +25,13 @@ export function buildProductBlock(projectName) {
 <div class="kms-link">
 
 * 無
-</div>`;
+</div>
+
+<!--
+| 連結模板 | 語法範例 | 簡報中的開啟方式 |
+| ------- | ------- | --------------- |
+| 一般連結 | \`[顯示文字](https://example.com)\` | 另開新分頁 |
+-->`;
 }
 
 export function buildPersonalReportTemplate({ name, periodStart, periodEnd }) {

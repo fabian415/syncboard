@@ -1,12 +1,10 @@
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
-import { Maximize2, Minimize2, X, Pencil } from 'lucide-vue-next';
+import { X, Pencil } from 'lucide-vue-next';
 import { usePresentationStore } from '../../stores/presentation.js';
 
 const presentation = usePresentationStore();
 const currentPage = ref(0);
-const shellRef = ref(null);
-const isFullscreen = ref(false);
 
 function handleEdit() {
   const onEdit = presentation.onEdit;
@@ -14,31 +12,10 @@ function handleEdit() {
   onEdit?.();
 }
 
-async function enterFullscreen() {
-  try {
-    await shellRef.value?.requestFullscreen?.();
-  } catch {
-    // Fullscreen can be denied by the browser (e.g. not a direct user gesture); ignore.
-  }
-}
-
-async function exitFullscreenIfActive() {
-  if (!document.fullscreenElement) return;
-  try {
-    await document.exitFullscreen();
-  } catch {
-    // Already exiting/exited; ignore.
-  }
-}
-
 watch(
   () => presentation.isOpen,
   (isOpen) => {
-    // requestFullscreen() itself is triggered synchronously from the store's
-    // open() action so it stays inside the user-activation window; this just
-    // resets the page and tears fullscreen back down on close.
     if (isOpen) currentPage.value = 0;
-    else exitFullscreenIfActive();
   },
 );
 
@@ -66,27 +43,10 @@ function next() {
   }
 }
 
-async function toggleFullscreen() {
-  if (!document.fullscreenElement) await enterFullscreen();
-  else await exitFullscreenIfActive();
-}
-
-function onFullscreenChange() {
-  const wasFullscreen = isFullscreen.value;
-  isFullscreen.value = !!document.fullscreenElement;
-  // Some browsers swallow the Escape keydown internally while exiting
-  // fullscreen, so it never reaches our window keydown listener at all — the
-  // only reliable signal that Escape was pressed is this real fullscreenchange
-  // event firing. Treat any exit from fullscreen as "leave the presentation".
-  if (wasFullscreen && !isFullscreen.value) presentation.close();
-}
-
 function handleKeydown(e) {
   if (!presentation.isOpen) return;
   if (e.key === 'ArrowRight') next();
   else if (e.key === 'ArrowLeft') prev();
-  // Fallback for when Escape's keydown does reach us (or fullscreen was never
-  // active to begin with, e.g. the request was silently denied).
   else if (e.key === 'Escape') presentation.close();
 }
 
@@ -106,27 +66,17 @@ watch(
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
-  document.addEventListener('fullscreenchange', onFullscreenChange);
 });
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
-  document.removeEventListener('fullscreenchange', onFullscreenChange);
   document.body.style.overflow = 'auto';
 });
 </script>
 
 <template>
-  <div v-if="presentation.isOpen" ref="shellRef" class="presentation-shell fixed inset-0 z-50 flex flex-col">
+  <div v-if="presentation.isOpen" class="presentation-shell fixed inset-0 z-50 flex flex-col">
     <div class="presentation-topbar flex justify-between items-center px-6 py-3 border-b">
       <div class="flex items-center space-x-3">
-        <button
-          class="presentation-icon-btn p-1.5 rounded-full"
-          :title="isFullscreen ? '退出全螢幕' : '全螢幕'"
-          @click="toggleFullscreen"
-        >
-          <Minimize2 v-if="isFullscreen" class="w-5 h-5" />
-          <Maximize2 v-else class="w-5 h-5" />
-        </button>
         <span class="presentation-title font-medium">{{ presentation.title }}</span>
       </div>
       <div class="flex items-center space-x-4">

@@ -168,6 +168,20 @@
   font-weight: 600;
 }
 
+/* Inline links (e.g. embedded in a Key Highlights bullet) need their own
+   visible affordance — without this they inherit plain text color/no
+   underline and are invisible as clickable links inside the prose. */
+.presentation-slide a {
+  color: var(--p-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.presentation-slide a:hover {
+  color: #1d4ed8;
+}
+
 .presentation-slide .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
