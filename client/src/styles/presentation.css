@@ -8,8 +8,10 @@
   --p-muted: #5a6a7a;
   --p-accent: #2563eb;
   --p-accent-soft: #eff6ff;
-  --p-warning: #d97706;
-  --p-warning-bg: #fffbeb;
+  --p-info: #2563eb;
+  --p-info-bg: #eff6ff;
+  --p-danger: #dc2626;
+  --p-danger-bg: #fef2f2;
   --p-border: #e2e8f0;
   --p-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
 
@@ -189,11 +191,10 @@
 }
 
 .presentation-slide .card {
-  background: var(--p-card);
-  border: 1px solid var(--p-border);
-  border-radius: 12px;
+  background: var(--p-info-bg);
+  border-left: 4px solid var(--p-info);
+  border-radius: 0 8px 8px 0;
   padding: 20px 24px;
-  box-shadow: var(--p-shadow);
   margin-bottom: 20px;
 }
 .presentation-slide .card ul {
@@ -202,35 +203,26 @@
 .presentation-slide .card li:last-child {
   margin-bottom: 0;
 }
+.presentation-slide .card li::before {
+  color: var(--p-info);
+}
 
 .presentation-slide .warning {
-  background: var(--p-warning-bg);
-  border-color: #fde68a;
+  background: var(--p-danger-bg);
+  border-left-color: var(--p-danger);
 }
 .presentation-slide .warning li::before {
-  color: var(--p-warning);
+  color: var(--p-danger);
 }
 
 .presentation-slide .kms-link {
   margin-top: 24px;
   font-size: 1rem;
-  background: var(--p-accent-soft);
-  border-left: 4px solid var(--p-accent);
-  padding: 12px 16px;
-  border-radius: 0 8px 8px 0;
 }
 .presentation-slide .kms-link li::before {
-  content: '🔗';
-  color: var(--p-muted);
-  font-size: 0.9rem;
-}
-.presentation-slide .kms-link a {
+  content: '•';
   color: var(--p-accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-.presentation-slide .kms-link a:hover {
-  text-decoration: underline;
+  font-weight: bold;
 }
 
 .presentation-slide .badge {

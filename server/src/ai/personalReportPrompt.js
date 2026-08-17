@@ -48,19 +48,19 @@ const EXAMPLE_OUTPUT = `<h1>🚀 TungYi｜DeviceOn</h1>
 </div>
 <!-- SLIDE -->
 <h1>📋 DeviceOn 下週計畫與討論</h1>
-<h2>1. 下週計畫 (Ongoing/Todo)</h2>
+<h2>3. 下週計畫 (Ongoing/Todo)</h2>
 <ul>
   <li>第三方金流串接（預計 8/15）</li>
   <li>撰寫效能測試報告</li>
 </ul>
-<h2>2. 🔥 討論 / 阻礙 (Blockers)</h2>
+<h2>4. 🔥 討論 / 阻礙 (Blockers)</h2>
 <div class="card warning">
   <ul>
     <li><strong>討論議題</strong>：與 Frontend 確認 Auth Token 過期機制</li>
     <li><strong>阻礙</strong>：需要 DBA 協助 Prod 唯讀權限</li>
   </ul>
 </div>
-<h2>3. 🔗 相關連結/附件 (Links)</h2>
+<h2>5. 🔗 相關連結/附件 (Links)</h2>
 <div class="kms-link">
   <ul>
     <li><a href="#">Confluence 架構圖</a> ｜ <a href="#">Jira-12345</a></li>
@@ -86,6 +86,7 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎。你會收�
    <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <a href="...">。
 4. 原文中任何地方出現的 Markdown 連結 \`[顯示文字](網址)\`（不限於「相關連結」區塊，核心重點、補充說明、下週計畫、討論/阻礙裡出現的也一樣），都必須轉換成 \`<a href="網址">顯示文字</a>\` 輸出；絕對不能把 \`[顯示文字](網址)\` 這種方括號＋括號的原始寫法直接留在輸出的 HTML 文字裡。
 5. 第一頁 <h1> 用 "🚀 {成員姓名}｜{Product 名稱}"，第二頁 <h1> 用 "📋 {成員姓名} 下週計畫與討論"。
+6. 每個區塊的 <h2> 前面都要加上編號（例如 "1. 核心重點 (Key Highlights)"），編號依固定順序「核心重點 → 補充說明 → 下週計畫 → 討論/阻礙 → 相關連結」**跨兩頁投影片連續編號**（第一頁最後編到幾號，第二頁第一個 <h2> 就接續下一號，不重新從 1 開始）。若某個選填區塊被省略，後面區塊的編號要依序遞補、不可留空號或跳號。
 
 以下是一組範例：
 
