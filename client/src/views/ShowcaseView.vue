@@ -32,12 +32,24 @@ async function playFollowUp() {
   error.value = '';
   ui.start('準備 Follow-up 投影片...');
   try {
-    const { pages } = await meetingStatusApi.getSectionPresentation(date, 'follow-up');
-    if (!pages || pages.length === 0) {
+    const { pages: followUpPages } = await meetingStatusApi.getSectionPresentation(date, 'follow-up');
+    const projectsWithSection = (meetingStatus.overview?.projects ?? []).filter((p) => p.sectionGenerated);
+    const projectDecks = await Promise.all(
+      projectsWithSection.map(async (project) => {
+        const { pages } = await meetingStatusApi.getSectionPresentation(date, `project-${project.projectId}`);
+        return pages?.length ? { title: 'Product Overall Status', pages } : null;
+      }),
+    );
+
+    const decks = [];
+    if (followUpPages?.length) decks.push({ title: 'Follow-up Items', pages: followUpPages });
+    decks.push(...projectDecks.filter(Boolean));
+
+    if (decks.length === 0) {
       error.value = '尚未產生 Follow-up 投影片，請先至整體進度頁面產生簡報';
       return;
     }
-    presentation.open(pages, 'Follow-up Items');
+    presentation.openQueue(decks);
   } catch (err) {
     error.value = err.response?.data?.error || '載入投影片失敗';
   } finally {
@@ -52,7 +64,6 @@ async function playProject(project) {
   try {
     const result = await meetingStatusApi.getShowcaseProjectPlaylist(date, project.projectId);
     const decks = [];
-    if (result.sectionPages?.length) decks.push({ title: result.name, pages: result.sectionPages });
     for (const member of result.members) {
       decks.push({ title: `${result.name}－${member.name}`, pages: member.pages });
     }
@@ -93,10 +104,10 @@ async function playProject(project) {
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
-            <h3 class="font-bold text-gray-900">Follow-up Items</h3>
+            <h3 class="font-bold text-gray-900">Follow-up Items & Product Overall Status</h3>
             <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">追蹤</span>
           </div>
-          <p class="text-sm text-gray-500 mt-0.5">由 {{ meetingStatus.overview?.header?.host || '主持人' }} 進行追蹤事項說明</p>
+          <p class="text-sm text-gray-500 mt-0.5">由 {{ meetingStatus.overview?.header?.host || '主持人' }} 進行追蹤事項與各專案整體進度說明</p>
         </div>
         <ChevronRight class="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors shrink-0" />
       </button>

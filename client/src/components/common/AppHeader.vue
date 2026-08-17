@@ -74,14 +74,14 @@ onMounted(async () => {
           class="px-3 py-1.5 rounded-lg transition-colors"
           :class="isMeetingStatusActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
         >
-          整體進度
+          整體進度上傳
         </router-link>
         <router-link
           :to="`/members?period=${period}`"
           class="px-3 py-1.5 rounded-lg transition-colors"
           :class="isMembersActive ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'"
         >
-          成員報告
+          個人報告上傳
         </router-link>
       </nav>
     </div>
