@@ -24,3 +24,162 @@ export function filterMeaningfulSlides(pages) {
   const filtered = pages.filter((page) => CONTENT_RE.test(page));
   return filtered.length > 0 ? filtered : pages;
 }
+
+const CONTINUED_SUFFIX = '（續）';
+
+function cloneWithContinuedSuffix(el) {
+  const clone = el.cloneNode(true);
+  if (!clone.textContent.includes(CONTINUED_SUFFIX)) {
+    clone.textContent = `${clone.textContent}${CONTINUED_SUFFIX}`;
+  }
+  return clone;
+}
+
+// A "section" is an <h2> plus every sibling node up to (not including) the
+// next <h2> — the natural unit a real report page is built from (heading +
+// its list/card). Nodes appearing before any <h2> are grouped headless.
+function groupIntoSections(bodyNodes) {
+  const sections = [];
+  let current = null;
+  for (const node of bodyNodes) {
+    if (node.tagName === 'H2' || !current) {
+      current = { heading: node.tagName === 'H2' ? node : null, blocks: node.tagName === 'H2' ? [] : [node] };
+      sections.push(current);
+    } else {
+      current.blocks.push(node);
+    }
+  }
+  return sections;
+}
+
+// Finds the <ul>/<ol> that carries a section's bulk content, so an
+// oversized section can be split item-by-item instead of all-or-nothing.
+// Returns the wrapping element too (e.g. <div class="card">) if the list
+// isn't a direct top-level block, so it can be reconstructed per chunk.
+function findListBlock(blocks) {
+  for (const block of blocks) {
+    if (block.tagName === 'UL' || block.tagName === 'OL') return { list: block, wrapper: null };
+    const nested = block.querySelector?.('ul, ol');
+    if (nested) return { list: nested, wrapper: block };
+  }
+  return null;
+}
+
+// Splits a single rendered slide's HTML into as many slides as needed to
+// fit within `height` at the given `width`, measured against the real
+// .presentation-slide styling. Breaks preferably at <h2> section boundaries,
+// falling back to splitting a section's own list item-by-item when even one
+// section alone overflows a full page. Best-effort: content that still
+// can't be split further (no list to break) is left to overflow/scroll
+// rather than dropped.
+export function autoPaginateHtml(html, { width, height } = {}) {
+  if (typeof document === 'undefined' || !html || !html.trim()) return [html];
+  if (!(width > 0) || !(height > 0)) return [html];
+
+  const measurer = document.createElement('div');
+  measurer.className = 'presentation-slide';
+  measurer.style.position = 'fixed';
+  measurer.style.top = '0';
+  measurer.style.left = '-99999px';
+  measurer.style.visibility = 'hidden';
+  measurer.style.overflow = 'visible';
+  measurer.style.height = 'auto';
+  measurer.style.width = `${width}px`;
+  measurer.style.pointerEvents = 'none';
+  document.body.appendChild(measurer);
+
+  const fits = () => measurer.scrollHeight <= height + 1;
+  const setMeasurerContent = (elements) => {
+    measurer.innerHTML = '';
+    elements.forEach((el) => measurer.appendChild(el));
+  };
+
+  try {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const nodes = Array.from(template.content.childNodes).filter((n) => n.nodeType === 1);
+    if (nodes.length === 0) return [html];
+
+    const titleNode = nodes[0].tagName === 'H1' ? nodes[0] : null;
+    const sections = groupIntoSections(titleNode ? nodes.slice(1) : nodes);
+
+    const pages = [];
+    let pageNodes = [];
+
+    const startNewPage = (isContinuation) => {
+      if (pageNodes.length) pages.push(pageNodes.map((n) => n.outerHTML).join(''));
+      pageNodes = titleNode ? [isContinuation ? cloneWithContinuedSuffix(titleNode) : titleNode.cloneNode(true)] : [];
+      setMeasurerContent(pageNodes);
+    };
+
+    startNewPage(false);
+
+    for (const section of sections) {
+      const candidateNodes = section.heading ? [section.heading, ...section.blocks] : section.blocks;
+      const trial = [...pageNodes, ...candidateNodes.map((n) => n.cloneNode(true))];
+      setMeasurerContent(trial);
+      if (fits()) {
+        pageNodes = trial;
+        continue;
+      }
+
+      const hasOtherContent = pageNodes.length > (titleNode ? 1 : 0);
+      if (hasOtherContent) {
+        startNewPage(true);
+        const freshTrial = [...pageNodes, ...candidateNodes.map((n) => n.cloneNode(true))];
+        setMeasurerContent(freshTrial);
+        if (fits()) {
+          pageNodes = freshTrial;
+          continue;
+        }
+      }
+
+      const listInfo = findListBlock(section.blocks);
+      if (!listInfo) {
+        // Nothing left to split on — place as-is and let it scroll within the slide.
+        pageNodes = [...pageNodes, ...candidateNodes.map((n) => n.cloneNode(true))];
+        setMeasurerContent(pageNodes);
+        continue;
+      }
+
+      const { list, wrapper } = listInfo;
+      const items = Array.from(list.children);
+      let firstChunk = true;
+      let i = 0;
+      while (i < items.length) {
+        if (!firstChunk) startNewPage(true);
+        const headingClone = section.heading
+          ? firstChunk
+            ? section.heading.cloneNode(true)
+            : cloneWithContinuedSuffix(section.heading)
+          : null;
+        const listClone = list.cloneNode(false);
+        const containerNode = wrapper ? wrapper.cloneNode(false) : listClone;
+        if (wrapper) containerNode.appendChild(listClone);
+
+        const baseNodes = [...pageNodes, ...(headingClone ? [headingClone] : [])];
+        let addedAny = false;
+        while (i < items.length) {
+          const candidateLi = items[i].cloneNode(true);
+          listClone.appendChild(candidateLi);
+          setMeasurerContent([...baseNodes, containerNode]);
+          if (fits() || !addedAny) {
+            addedAny = true;
+            i += 1;
+          } else {
+            listClone.removeChild(candidateLi);
+            break;
+          }
+        }
+
+        pageNodes = [...baseNodes, containerNode];
+        firstChunk = false;
+      }
+    }
+
+    if (pageNodes.length) pages.push(pageNodes.map((n) => n.outerHTML).join(''));
+    return pages.length > 0 ? pages : [html];
+  } finally {
+    document.body.removeChild(measurer);
+  }
+}

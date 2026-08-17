@@ -1,9 +1,13 @@
 import { defineStore } from 'pinia';
-import { filterMeaningfulSlides } from '../utils/slides.js';
+import { filterMeaningfulSlides, autoPaginateHtml } from '../utils/slides.js';
 
 export const usePresentationStore = defineStore('presentation', {
   state: () => ({
     isOpen: false,
+    // Decks as generated/stored — one page per section, before any
+    // overflow-driven splitting. Kept so autoPaginate can be re-run from
+    // scratch (e.g. on resize) without compounding splits.
+    rawDecks: [],
     decks: [],
     deckIndex: 0,
     title: '',
@@ -26,13 +30,24 @@ export const usePresentationStore = defineStore('presentation', {
       this.openQueue([{ title, pages }], { onEdit });
     },
     openQueue(decks, { onEdit = null } = {}) {
-      this.decks = (decks ?? [])
+      this.rawDecks = (decks ?? [])
         .map((deck) => ({ title: deck.title, pages: filterMeaningfulSlides(deck.pages ?? []) }))
         .filter((deck) => deck.pages.length > 0);
+      this.decks = this.rawDecks;
       this.deckIndex = 0;
       this.title = this.decks[0]?.title ?? '';
       this.onEdit = onEdit;
       this.isOpen = true;
+    },
+    // Re-splits every deck's pages against the presentation viewport's real
+    // rendered size, so content that overflows a slide gets pushed onto
+    // extra pages instead of just scrolling. Always recomputes from
+    // rawDecks so repeated calls (e.g. on window resize) don't compound.
+    autoPaginate({ width, height }) {
+      this.decks = this.rawDecks.map((deck) => ({
+        title: deck.title,
+        pages: deck.pages.flatMap((page) => autoPaginateHtml(page, { width, height })),
+      }));
     },
     goToDeck(index) {
       if (index < 0 || index >= this.decks.length) return;

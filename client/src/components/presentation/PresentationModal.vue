@@ -1,10 +1,29 @@
 <script setup>
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { X, Pencil } from 'lucide-vue-next';
 import { usePresentationStore } from '../../stores/presentation.js';
 
 const presentation = usePresentationStore();
 const currentPage = ref(0);
+const stageRef = ref(null);
+// Gates slide rendering until the first auto-pagination pass has run, so the
+// viewer never flashes unpaginated (potentially overflowing) content.
+const paginated = ref(false);
+
+function runAutoPaginate() {
+  const stage = stageRef.value;
+  if (!stage) return;
+  presentation.autoPaginate({ width: stage.clientWidth, height: stage.clientHeight });
+  if (currentPage.value > presentation.pages.length - 1) {
+    currentPage.value = Math.max(0, presentation.pages.length - 1);
+  }
+}
+
+let resizeTimer = null;
+function handleResize() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(runAutoPaginate, 150);
+}
 
 function handleEdit() {
   const onEdit = presentation.onEdit;
@@ -14,8 +33,18 @@ function handleEdit() {
 
 watch(
   () => presentation.isOpen,
-  (isOpen) => {
-    if (isOpen) currentPage.value = 0;
+  async (isOpen) => {
+    if (!isOpen) {
+      paginated.value = false;
+      window.removeEventListener('resize', handleResize);
+      return;
+    }
+    currentPage.value = 0;
+    paginated.value = false;
+    await nextTick();
+    runAutoPaginate();
+    paginated.value = true;
+    window.addEventListener('resize', handleResize);
   },
 );
 
@@ -69,6 +98,8 @@ onMounted(() => {
 });
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('resize', handleResize);
+  clearTimeout(resizeTimer);
   document.body.style.overflow = 'auto';
 });
 </script>
@@ -94,8 +125,8 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div class="presentation-stage flex-1 relative overflow-hidden">
-      <Transition name="slide-fade" mode="out-in">
+    <div ref="stageRef" class="presentation-stage flex-1 relative overflow-hidden">
+      <Transition v-if="paginated" name="slide-fade" mode="out-in">
         <div
           :key="currentPage"
           class="presentation-slide"
