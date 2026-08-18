@@ -2,6 +2,7 @@
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { X, Pencil } from 'lucide-vue-next';
 import { usePresentationStore } from '../../stores/presentation.js';
+import { findSlideIndexContaining } from '../../utils/slides.js';
 
 const presentation = usePresentationStore();
 const currentPage = ref(0);
@@ -43,6 +44,10 @@ watch(
     paginated.value = false;
     await nextTick();
     runAutoPaginate();
+    if (presentation.initialQuery) {
+      const matchIndex = findSlideIndexContaining(presentation.pages, presentation.initialQuery);
+      if (matchIndex !== -1) currentPage.value = matchIndex;
+    }
     paginated.value = true;
     window.addEventListener('resize', handleResize);
   },
@@ -51,6 +56,14 @@ watch(
 // Running page number across every merged deck, e.g. deck 2's page 1 after a
 // 3-page deck 1 is global page 4 — not deck-local page 1.
 const globalPageNumber = computed(() => presentation.pagesBeforeCurrentDeck + currentPage.value + 1);
+
+// Each page's own <h1> (if any) is shown in the topbar instead of inline in
+// the slide body, so it stays put while the body scrolls/paginates.
+const currentSlideTitle = computed(() => {
+  const html = presentation.pages[currentPage.value];
+  const match = html?.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  return match ? match[1] : '';
+});
 
 const isAtFirstDeckPage = () => currentPage.value === 0 && !presentation.hasPrevDeck;
 const isAtLastDeckPage = () => currentPage.value === presentation.pages.length - 1 && !presentation.hasNextDeck;
@@ -106,21 +119,27 @@ onUnmounted(() => {
 
 <template>
   <div v-if="presentation.isOpen" class="presentation-shell fixed inset-0 z-50 flex flex-col">
-    <div class="presentation-topbar flex justify-between items-center px-6 py-3 border-b">
+    <div class="presentation-topbar flex justify-between items-center px-6 py-1.5 border-b">
       <div class="flex items-center space-x-3">
         <span class="presentation-title font-medium">{{ presentation.title }}</span>
+        <span v-if="currentSlideTitle" class="presentation-title-sep">›</span>
+        <span
+          v-if="currentSlideTitle"
+          class="presentation-title presentation-slide-title font-medium"
+          v-html="currentSlideTitle"
+        ></span>
       </div>
       <div class="flex items-center space-x-4">
         <button
           v-if="presentation.onEdit"
-          class="presentation-btn flex items-center px-3 py-1.5 rounded-full text-sm font-medium"
+          class="presentation-btn flex items-center px-3 py-1 rounded-full text-sm font-medium"
           @click="handleEdit"
         >
           <Pencil class="w-4 h-4 mr-1.5" />
           編輯內容
         </button>
-        <button class="presentation-icon-btn p-2 rounded-full" @click="presentation.close">
-          <X class="w-6 h-6" />
+        <button class="presentation-icon-btn p-1.5 rounded-full" @click="presentation.close">
+          <X class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -136,7 +155,7 @@ onUnmounted(() => {
       </Transition>
     </div>
 
-    <div class="presentation-navbar flex items-center justify-between px-6 py-3 border-t">
+    <div class="presentation-navbar flex items-center justify-between px-6 py-1.5 border-t">
       <button class="presentation-nav-btn" :disabled="isAtFirstDeckPage()" @click="prev">← 上一頁</button>
       <div class="flex items-center gap-3">
         <span class="presentation-page-info">{{ globalPageNumber }} / {{ presentation.totalPages }}</span>

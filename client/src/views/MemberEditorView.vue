@@ -71,21 +71,21 @@ function openPreview() {
     <p class="text-sm text-gray-500">找不到這位成員，請確認網址是否正確。</p>
   </div>
 
-  <div v-else class="h-[calc(100vh-12rem)] flex flex-col space-y-4">
-    <div class="flex items-center justify-between flex-wrap gap-4">
-      <div class="flex items-start gap-3">
+  <div v-else class="flex-1 min-h-0 flex flex-col space-y-2">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-1.5 min-w-0">
         <button
-          class="p-2 -ml-2 mt-1 rounded-full hover:bg-gray-200 text-gray-600 transition-colors shrink-0"
+          class="p-1 -ml-1 rounded-full hover:bg-gray-200 text-gray-600 transition-colors shrink-0"
           @click="router.back()"
         >
-          <ArrowLeft class="w-5 h-5" />
+          <ArrowLeft class="w-4 h-4" />
         </button>
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-            <FileText class="w-6 h-6 mr-3 text-gray-400" />
-            {{ projects.detail?.name }} - {{ member.name }}
+        <div class="min-w-0">
+          <h1 class="text-sm font-semibold text-gray-900 flex items-center">
+            <FileText class="w-3.5 h-3.5 mr-1 text-gray-400 shrink-0" />
+            <span class="truncate">{{ projects.detail?.name }} - {{ member.name }}</span>
           </h1>
-          <p class="mt-1 text-sm text-gray-500">
+          <p class="text-[11px] text-gray-500 truncate">
             內容來自成員在「我的報告」填寫並分送的雙週報，這裡可直接微調簡報 HTML。
           </p>
         </div>
@@ -97,13 +97,13 @@ function openPreview() {
         <span v-if="report.error" class="text-sm text-red-600">{{ report.error }}</span>
         <button
           v-if="report.htmlPages"
-          class="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm"
+          class="px-3.5 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm"
           @click="openPreview"
         >
           簡報放映
         </button>
         <button
-          class="px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm disabled:opacity-60"
+          class="px-3.5 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm disabled:opacity-60"
           :disabled="report.isSaving"
           @click="handleSave"
         >

@@ -12,6 +12,9 @@ export const usePresentationStore = defineStore('presentation', {
     deckIndex: 0,
     title: '',
     onEdit: null,
+    // Search keyword to land on when opening, if any — PresentationModal
+    // resolves this to a page index itself once pages are paginated.
+    initialQuery: '',
   }),
   getters: {
     pages: (state) => state.decks[state.deckIndex]?.pages ?? [],
@@ -26,10 +29,10 @@ export const usePresentationStore = defineStore('presentation', {
   },
   actions: {
     // Single-deck convenience wrapper kept for existing callers (still supports onEdit).
-    open(pages, title, onEdit = null) {
-      this.openQueue([{ title, pages }], { onEdit });
+    open(pages, title, onEdit = null, { query = '' } = {}) {
+      this.openQueue([{ title, pages }], { onEdit, query });
     },
-    openQueue(decks, { onEdit = null } = {}) {
+    openQueue(decks, { onEdit = null, query = '' } = {}) {
       this.rawDecks = (decks ?? [])
         .map((deck) => ({ title: deck.title, pages: filterMeaningfulSlides(deck.pages ?? []) }))
         .filter((deck) => deck.pages.length > 0);
@@ -37,6 +40,7 @@ export const usePresentationStore = defineStore('presentation', {
       this.deckIndex = 0;
       this.title = this.decks[0]?.title ?? '';
       this.onEdit = onEdit;
+      this.initialQuery = query;
       this.isOpen = true;
     },
     // Re-splits every deck's pages against the presentation viewport's real

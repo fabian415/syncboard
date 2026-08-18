@@ -192,7 +192,7 @@ async function handleDistribute() {
     <p class="text-sm text-gray-500">找不到這位成員，請確認網址是否正確。</p>
   </div>
 
-  <div v-else class="h-[calc(100vh-8rem)] flex flex-col space-y-2">
+  <div v-else class="flex-1 min-h-0 flex flex-col space-y-2">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <button

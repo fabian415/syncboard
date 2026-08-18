@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { Sparkles } from 'lucide-vue-next';
 import { todayISO } from '../../utils/date.js';
 import { getVersionInfo } from '../../api/version.js';
+import GlobalSearch from './GlobalSearch.vue';
 
 const route = useRoute();
 const PERIOD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -44,7 +45,7 @@ onMounted(async () => {
 
 <template>
   <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center space-x-2">
         <router-link to="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity">
           <div class="bg-blue-600 p-1.5 rounded-lg">
@@ -60,6 +61,9 @@ onMounted(async () => {
         >
           v{{ version }}
         </router-link>
+      </div>
+      <div v-if="showNav" class="hidden md:block flex-1 max-w-sm mx-6">
+        <GlobalSearch />
       </div>
       <nav v-if="showNav" class="flex items-center space-x-1 text-sm font-medium">
         <router-link

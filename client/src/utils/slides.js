@@ -25,6 +25,20 @@ export function filterMeaningfulSlides(pages) {
   return filtered.length > 0 ? filtered : pages;
 }
 
+// Locates which rendered slide contains a search query, so a search result
+// can jump to the right page even though filterMeaningfulSlides/autoPaginate
+// may have dropped or re-split pages since the query was first matched.
+export function findSlideIndexContaining(pages, query) {
+  const q = query?.trim().toLowerCase();
+  if (!q) return -1;
+  const div = document.createElement('div');
+  for (let i = 0; i < pages.length; i += 1) {
+    div.innerHTML = pages[i];
+    if ((div.textContent || '').toLowerCase().includes(q)) return i;
+  }
+  return -1;
+}
+
 const CONTINUED_SUFFIX = '（續）';
 
 function cloneWithContinuedSuffix(el) {

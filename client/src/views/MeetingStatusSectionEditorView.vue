@@ -121,7 +121,7 @@ function goBack() {
     <p class="text-sm text-gray-500">載入中...</p>
   </div>
 
-  <div v-else class="space-y-3">
+  <div v-else class="flex-1 min-h-0 flex flex-col space-y-3">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <div>
         <button class="flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors mb-2" @click="goBack">
@@ -196,7 +196,7 @@ function goBack() {
       <HtmlSourceEditor v-model="htmlDraft" />
     </div>
 
-    <div class="h-[520px] flex flex-col">
+    <div class="flex-1 min-h-0 flex flex-col">
       <MarkdownEditor v-model="draft" />
     </div>
   </div>
