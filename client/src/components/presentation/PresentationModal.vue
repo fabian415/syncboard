@@ -158,18 +158,35 @@ function next() {
   }
 }
 
+const lightboxSrc = ref(null);
+function closeLightbox() {
+  lightboxSrc.value = null;
+}
+
 function handleKeydown(e) {
   if (!presentation.isOpen) return;
+  if (e.key === 'Escape') {
+    if (lightboxSrc.value) closeLightbox();
+    else presentation.close();
+    return;
+  }
+  if (lightboxSrc.value) return;
   if (e.key === 'ArrowRight') next();
   else if (e.key === 'ArrowLeft') prev();
-  else if (e.key === 'Escape') presentation.close();
 }
 
 function handleSlideClick(e) {
   const link = e.target.closest('a[href]');
-  if (!link) return;
-  e.preventDefault();
-  window.open(link.href, '_blank', 'noopener');
+  if (link) {
+    e.preventDefault();
+    window.open(link.href, '_blank', 'noopener');
+    return;
+  }
+  const img = e.target.closest('img[src]');
+  if (img) {
+    e.preventDefault();
+    lightboxSrc.value = img.src;
+  }
 }
 
 watch(
@@ -288,5 +305,14 @@ onUnmounted(() => {
         下一頁 →
       </button>
     </div>
+
+    <Transition name="lightbox-fade">
+      <div v-if="lightboxSrc" class="presentation-lightbox" @click="closeLightbox">
+        <button class="presentation-lightbox-close" title="關閉" @click="closeLightbox">
+          <X class="w-5 h-5" />
+        </button>
+        <img :src="lightboxSrc" class="presentation-lightbox-img" @click.stop />
+      </div>
+    </Transition>
   </div>
 </template>

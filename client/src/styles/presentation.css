@@ -307,6 +307,16 @@
   color: #1d4ed8;
 }
 
+/* Embedded images open in the lightbox overlay (see handleSlideClick), so
+   they get a zoom affordance instead of a plain pointer. */
+.presentation-slide img {
+  cursor: zoom-in;
+  transition: opacity 0.15s ease;
+}
+.presentation-slide img:hover {
+  opacity: 0.85;
+}
+
 .presentation-slide .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -404,4 +414,48 @@
 .slide-fade-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* Lightbox — clicking an embedded <img> enlarges it over the deck instead
+   of navigating away, so viewers never lose their place in the slides. */
+.presentation-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: rgba(0, 0, 0, 0.8);
+  cursor: zoom-out;
+}
+.presentation-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+.presentation-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.presentation-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
 }
