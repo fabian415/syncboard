@@ -12,6 +12,7 @@ export const usePresentationStore = defineStore('presentation', {
     deckIndex: 0,
     title: '',
     onEdit: null,
+    editLabel: '編輯內容',
     // Search keyword to land on when opening, if any — PresentationModal
     // resolves this to a page index itself once pages are paginated.
     initialQuery: '',
@@ -29,10 +30,10 @@ export const usePresentationStore = defineStore('presentation', {
   },
   actions: {
     // Single-deck convenience wrapper kept for existing callers (still supports onEdit).
-    open(pages, title, onEdit = null, { query = '' } = {}) {
-      this.openQueue([{ title, pages }], { onEdit, query });
+    open(pages, title, onEdit = null, { query = '', editLabel = '編輯內容' } = {}) {
+      this.openQueue([{ title, pages }], { onEdit, query, editLabel });
     },
-    openQueue(decks, { onEdit = null, query = '' } = {}) {
+    openQueue(decks, { onEdit = null, query = '', editLabel = '編輯內容' } = {}) {
       this.rawDecks = (decks ?? [])
         .map((deck) => ({ title: deck.title, pages: filterMeaningfulSlides(deck.pages ?? []) }))
         .filter((deck) => deck.pages.length > 0);
@@ -40,6 +41,7 @@ export const usePresentationStore = defineStore('presentation', {
       this.deckIndex = 0;
       this.title = this.decks[0]?.title ?? '';
       this.onEdit = onEdit;
+      this.editLabel = editLabel;
       this.initialQuery = query;
       this.isOpen = true;
     },
@@ -61,6 +63,7 @@ export const usePresentationStore = defineStore('presentation', {
     close() {
       this.isOpen = false;
       this.onEdit = null;
+      this.editLabel = '編輯內容';
     },
   },
 });

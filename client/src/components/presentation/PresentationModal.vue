@@ -138,6 +138,21 @@ const globalPageNumber = computed(() => presentation.pagesBeforeCurrentDeck + cu
 // (deck.title's own "－name" suffix), so the two don't repeat each other.
 const topbarTitle = computed(() => outlineContext.value || presentation.title);
 
+// A Product slide's single Owner is generated as its own leading <h2>Owner：xxx</h2>
+// (see server/src/ai/*Prompt.js) so it isn't repeated across every sub-item
+// heading. Pull it out of the slide body and show it in the topbar next to
+// the title instead, rather than as a body line above the sub-items.
+const OWNER_HEADING_RE = /<h2>\s*Owner[：:]\s*([^<]*?)\s*<\/h2>\s*/i;
+const currentSlide = computed(() => {
+  const raw = presentation.pages[currentPage.value] ?? '';
+  const match = raw.match(OWNER_HEADING_RE);
+  if (!match) return { html: raw, owner: '' };
+  return {
+    html: raw.slice(0, match.index) + raw.slice(match.index + match[0].length),
+    owner: match[1].trim(),
+  };
+});
+
 const isAtFirstDeckPage = () => currentPage.value === 0 && !presentation.hasPrevDeck;
 const isAtLastDeckPage = () => currentPage.value === presentation.pages.length - 1 && !presentation.hasNextDeck;
 
@@ -221,6 +236,7 @@ onUnmounted(() => {
           <PanelLeftOpen v-else class="w-4 h-4" />
         </button>
         <span class="presentation-title font-medium">{{ topbarTitle }}</span>
+        <span v-if="currentSlide.owner" class="presentation-owner-badge">Owner：{{ currentSlide.owner }}</span>
       </div>
       <div class="flex items-center space-x-4">
         <button
@@ -229,7 +245,7 @@ onUnmounted(() => {
           @click="handleEdit"
         >
           <Pencil class="w-4 h-4 mr-1.5" />
-          編輯內容
+          {{ presentation.editLabel }}
         </button>
         <button class="presentation-icon-btn p-1.5 rounded-full" @click="presentation.close">
           <X class="w-5 h-5" />
@@ -278,7 +294,7 @@ onUnmounted(() => {
           <div
             :key="currentPage"
             class="presentation-slide"
-            v-html="presentation.pages[currentPage]"
+            v-html="currentSlide.html"
             @click="handleSlideClick"
           ></div>
         </Transition>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft, Users, FileText, Clock, Pencil, CheckCircle2 } from 'lucide-vue-next';
+import { ArrowLeft, Users, FileText, Clock, Pencil, Code2, CheckCircle2 } from 'lucide-vue-next';
 import { useMeetingStatusStore } from '../stores/meetingStatus.js';
 import { useProjectsStore } from '../stores/projects.js';
 import { usePresentationStore } from '../stores/presentation.js';
@@ -43,9 +43,15 @@ function openEditor() {
   router.push(`/meeting-status/projects/${projectId}/edit?period=${date}`);
 }
 
+function openHtmlEditor() {
+  router.push(`/meeting-status/projects/${projectId}/edit?period=${date}&html=1`);
+}
+
 function playPresentation() {
   if (!meetingStatus.sectionHtmlPages) return;
-  presentation.open(meetingStatus.sectionHtmlPages, `${projects.detail?.name}｜${date}`, openEditor);
+  presentation.open(meetingStatus.sectionHtmlPages, `${projects.detail?.name}｜${date}`, openHtmlEditor, {
+    editLabel: '編輯HTML內容',
+  });
 }
 
 async function previewMember(member) {
@@ -127,6 +133,19 @@ function editMember(member) {
           >
             <Pencil class="w-3.5 h-3.5 mr-1.5" />
             編輯內容
+          </button>
+          <button
+            class="flex items-center px-4 py-2 border rounded-lg text-sm font-medium transition-colors"
+            :class="
+              meetingStatus.sectionHtmlPages
+                ? 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                : 'border-transparent text-gray-400 bg-gray-50 cursor-default'
+            "
+            :disabled="!meetingStatus.sectionHtmlPages"
+            @click="openHtmlEditor"
+          >
+            <Code2 class="w-3.5 h-3.5 mr-1.5" />
+            編輯HTML內容
           </button>
         </div>
       </div>

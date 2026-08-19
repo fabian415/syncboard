@@ -46,7 +46,8 @@ const EXAMPLE_OUTPUT = `<h1>📋 Meeting Overall Status｜2026-08-13</h1>
 </ul>
 <!-- SLIDE -->
 <h1>🌐 DeviceOn</h1>
-<h2>On-Premise 核心服務（Owner：Alex｜階段：Staging 驗證中）</h2>
+<h2>Owner：Alex</h2>
+<h2>On-Premise 核心服務（階段：Staging 驗證中）</h2>
 <ul>
   <li><span class="badge badge-new-done">🎉 NEW DONE</span> 完成 C/C++ 原始碼掃描與 SBOM 生成工具開發（搭配 Grype 掃描 CVE）</li>
   <li><span class="badge badge-done">✅ DONE</span> 核心服務升級至 JDK 17</li>
@@ -65,7 +66,7 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 
 嚴格分頁規則：
 1. 第 1 頁＝標題＋主持人/與會人員＋整個 Follow-up 區塊（含補充說明，若補充說明是「無」則省略該行）。
-2. 之後**每一個 "### 🌐 Product 名稱" 區塊各自輸出一頁**（不可把多個 Product 合併在同一頁，也不可把同一個 Product 拆成多頁），保留該 Product 底下所有 "#### 📦 子項目"，每個子項目用一個 <h2> 標出「子項目名稱（Owner：xxx｜階段：xxx）」。
+2. 之後**每一個 "### 🌐 Product 名稱" 區塊各自輸出一頁**（不可把多個 Product 合併在同一頁，也不可把同一個 Product 拆成多頁），該頁 <h1> 之後緊接著輸出一個 <h2>Owner：xxx</h2>（使用該 Product 底下唯一的 "**Owner**" 值，只在頁首出現一次，不可在每個子項目重複），接著保留該 Product 底下所有 "#### 📦 子項目"，每個子項目用一個 <h2> 標出「子項目名稱（階段：xxx）」。
 3. 「⚠️ 風險與阻礙」與「💡 需要的決策或協助」兩行：若內容是「無」則完全省略；若有實際內容，附加在**最後一個 Product 頁面**的結尾，用 <div class="card warning"> 包住（不要另外多開一頁）。
 4. 輸出總頁數＝1（Follow-up）＋ Product 數量，恰好如此，不可增減。
 

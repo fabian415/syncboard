@@ -29,6 +29,16 @@
   color: var(--p-text);
 }
 
+.presentation-owner-badge {
+  color: var(--p-accent);
+  background: var(--p-accent-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .presentation-icon-muted {
   color: var(--p-muted);
 }

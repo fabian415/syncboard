@@ -35,6 +35,12 @@ const htmlSaveMessage = ref('');
 const isSavingHtml = ref(false);
 
 const title = computed(() => (projectId ? projects.detail?.name ?? '' : 'Follow-up'));
+// Landing here via a query-string ?html=1 link is permanently HTML-only (no
+// way back to markdown short of leaving the page); toggling showHtmlEditor
+// on from the in-page "編輯簡報 HTML" link/presentation callback is the same
+// exclusive view but with a way back, since there's a markdown draft to return to.
+const isHtmlOnlyMode = computed(() => !!route.query.html);
+const htmlEditorActive = computed(() => isHtmlOnlyMode.value || showHtmlEditor.value);
 
 onMounted(async () => {
   try {
@@ -94,7 +100,9 @@ async function saveHtmlDraft() {
 
 function playPresentation() {
   if (!meetingStatus.sectionHtmlPages) return;
-  presentation.open(meetingStatus.sectionHtmlPages, `${title.value}｜${date}`, openHtmlEditor);
+  presentation.open(meetingStatus.sectionHtmlPages, `${title.value}｜${date}`, openHtmlEditor, {
+    editLabel: '編輯HTML內容',
+  });
 }
 
 async function handleGenerate() {
@@ -103,7 +111,7 @@ async function handleGenerate() {
   try {
     await meetingStatus.saveSection(date, sectionKey, draft.value);
     const pages = await meetingStatus.refactorSection(date, sectionKey);
-    presentation.open(pages, `${title.value}｜${date}`, openHtmlEditor);
+    presentation.open(pages, `${title.value}｜${date}`, openHtmlEditor, { editLabel: '編輯HTML內容' });
   } catch {
     // meetingStatus.error already set for display
   } finally {
@@ -131,7 +139,9 @@ function goBack() {
         <h1 class="text-lg font-bold text-gray-900">{{ title }}｜{{ date }}</h1>
       </div>
       <div class="flex items-center gap-2">
-        <span v-if="saveMessage" class="text-xs text-green-600">{{ saveMessage }}</span>
+        <span v-if="htmlEditorActive ? htmlSaveMessage : saveMessage" class="text-xs text-green-600">
+          {{ htmlEditorActive ? htmlSaveMessage : saveMessage }}
+        </span>
         <span v-if="meetingStatus.error" class="text-xs text-red-600">{{ meetingStatus.error }}</span>
 
         <button
@@ -145,13 +155,14 @@ function goBack() {
 
         <button
           class="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium text-xs disabled:opacity-60"
-          :disabled="meetingStatus.isSaving"
-          @click="handleSave"
+          :disabled="htmlEditorActive ? isSavingHtml : meetingStatus.isSaving"
+          @click="htmlEditorActive ? saveHtmlDraft() : handleSave()"
         >
-          {{ meetingStatus.isSaving ? '儲存中...' : '儲存' }}
+          {{ (htmlEditorActive ? isSavingHtml : meetingStatus.isSaving) ? '儲存中...' : '儲存' }}
         </button>
 
         <button
+          v-if="!htmlEditorActive"
           class="relative group overflow-hidden rounded-lg p-[1.5px] disabled:opacity-60 disabled:pointer-events-none"
           :disabled="ui.isLoading"
           @click="handleGenerate"
@@ -167,37 +178,33 @@ function goBack() {
       </div>
     </div>
 
-    <button
-      v-if="meetingStatus.sectionHtmlPages && !showHtmlEditor"
-      class="flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors self-start"
-      @click="openHtmlEditor"
-    >
-      <Pencil class="w-3.5 h-3.5 mr-1.5" />
-      編輯簡報 HTML
-    </button>
-
-    <div v-if="showHtmlEditor" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
-      <div class="flex items-center justify-between">
-        <h4 class="text-sm font-bold text-gray-700">編輯簡報 HTML</h4>
-        <div class="flex items-center space-x-3">
-          <span v-if="htmlSaveMessage" class="text-sm text-green-600">{{ htmlSaveMessage }}</span>
-          <button
-            class="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium disabled:opacity-60"
-            :disabled="isSavingHtml"
-            @click="saveHtmlDraft"
-          >
-            {{ isSavingHtml ? '儲存中...' : '儲存' }}
-          </button>
-          <button class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-700 text-sm font-medium" @click="showHtmlEditor = false">
-            收合
-          </button>
-        </div>
+    <template v-if="htmlEditorActive">
+      <button
+        v-if="!isHtmlOnlyMode"
+        class="flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors self-start"
+        @click="showHtmlEditor = false"
+      >
+        <ArrowLeft class="w-3.5 h-3.5 mr-1.5" />
+        返回 Markdown 編輯
+      </button>
+      <div class="flex-1 min-h-0 flex flex-col">
+        <HtmlSourceEditor v-model="htmlDraft" />
       </div>
-      <HtmlSourceEditor v-model="htmlDraft" />
-    </div>
+    </template>
 
-    <div class="flex-1 min-h-0 flex flex-col">
-      <MarkdownEditor v-model="draft" />
-    </div>
+    <template v-else>
+      <button
+        v-if="meetingStatus.sectionHtmlPages"
+        class="flex items-center text-xs text-gray-500 hover:text-blue-600 transition-colors self-start"
+        @click="openHtmlEditor"
+      >
+        <Pencil class="w-3.5 h-3.5 mr-1.5" />
+        編輯簡報 HTML
+      </button>
+
+      <div class="flex-1 min-h-0 flex flex-col">
+        <MarkdownEditor v-model="draft" />
+      </div>
+    </template>
   </div>
 </template>
