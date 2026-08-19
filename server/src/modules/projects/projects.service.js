@@ -1,5 +1,6 @@
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
+import { memberPresentationRank } from '../../constants/memberOrder.js';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -58,19 +59,21 @@ export async function getProjectDetail(projectId, date = todayISO()) {
   });
   const reportByUserId = new Map(reports.map((r) => [r.userId, r]));
 
-  const members = memberUserIds.map((userId) => {
-    const user = userById.get(userId);
-    const report = reportByUserId.get(userId);
-    return {
-      userId,
-      name: user.name,
-      role: user.role,
-      status: report?.status ?? 'DRAFTING',
-      hasPresentation: report?.htmlPath != null,
-      submittedAt: report?.submittedAt ?? null,
-      updatedAt: report?.updatedAt ?? null,
-    };
-  });
+  const members = memberUserIds
+    .map((userId) => {
+      const user = userById.get(userId);
+      const report = reportByUserId.get(userId);
+      return {
+        userId,
+        name: user.name,
+        role: user.role,
+        status: report?.status ?? 'DRAFTING',
+        hasPresentation: report?.htmlPath != null,
+        submittedAt: report?.submittedAt ?? null,
+        updatedAt: report?.updatedAt ?? null,
+      };
+    })
+    .sort((a, b) => memberPresentationRank(a.name) - memberPresentationRank(b.name));
 
   return {
     id: project.id,
