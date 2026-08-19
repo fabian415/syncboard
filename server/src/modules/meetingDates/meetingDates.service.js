@@ -18,15 +18,37 @@ import {
 } from '../../storage/fsStore.js';
 
 /**
- * Every date that already has at least one project Report, so the frontend
- * can offer "jump back in" chips instead of forcing everyone to
- * remember/retype the same date.
+ * Every date that already has at least one Report, MemberReport,
+ * MeetingStatusReport, MeetingStatusSection, or CombinedReport, so the
+ * frontend can offer "jump back in" chips instead of forcing everyone to
+ * remember/retype the same date. Covers all five tables since a meeting
+ * date can have data in any of them (e.g. draft MeetingStatusSections exist
+ * before the MeetingStatusReport is finalized).
  */
 export async function listMeetingDates() {
-  const reportGroups = await prisma.report.groupBy({ by: ['reportDate'], _count: { _all: true } });
+  const [reportGroups, memberReportGroups, meetingStatusGroups, sectionGroups, combinedGroups] = await Promise.all([
+    prisma.report.groupBy({ by: ['reportDate'], _count: { _all: true } }),
+    prisma.memberReport.groupBy({ by: ['periodStart'], _count: { _all: true } }),
+    prisma.meetingStatusReport.groupBy({ by: ['meetingDate'], _count: { _all: true } }),
+    prisma.meetingStatusSection.groupBy({ by: ['meetingDate'], _count: { _all: true } }),
+    prisma.combinedReport.groupBy({ by: ['reportDate'], _count: { _all: true } }),
+  ]);
 
-  return reportGroups
-    .map((g) => ({ date: g.reportDate.toISOString().slice(0, 10), count: g._count._all }))
+  const counts = new Map();
+  const addAll = (groups, dateField) => {
+    for (const g of groups) {
+      const date = g[dateField].toISOString().slice(0, 10);
+      counts.set(date, (counts.get(date) || 0) + g._count._all);
+    }
+  };
+  addAll(reportGroups, 'reportDate');
+  addAll(memberReportGroups, 'periodStart');
+  addAll(meetingStatusGroups, 'meetingDate');
+  addAll(sectionGroups, 'meetingDate');
+  addAll(combinedGroups, 'reportDate');
+
+  return [...counts.entries()]
+    .map(([date, count]) => ({ date, count }))
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 

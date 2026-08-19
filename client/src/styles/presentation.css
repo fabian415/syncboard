@@ -286,7 +286,7 @@
 }
 .presentation-slide li {
   position: relative;
-  margin-bottom: 14px;
+  /* margin-bottom: 14px; */
   padding-left: 1.2em;
   line-height: 1.6;
   font-size: 1.1rem;
@@ -301,6 +301,13 @@
 .presentation-slide strong {
   color: var(--p-text);
   font-weight: 600;
+}
+
+/* Inside a heading, <strong> sits next to plain text that inherits the
+   h2's own font-weight (700) — the default 600 above would make it look
+   lighter than the Owner text right after it, so match the h2 weight. */
+.presentation-slide h2 strong {
+  font-weight: 700;
 }
 
 /* Inline links (e.g. embedded in a Key Highlights bullet) need their own
@@ -379,6 +386,14 @@
   white-space: nowrap;
 }
 
+/* Follow-up item headings put the status badge after the sentence
+   (name + Owner) instead of before it, so it needs leading not trailing
+   space; it's always the last element child of the <h2> in that layout. */
+.presentation-slide h2 .badge:last-child {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
 .presentation-slide .badge-new-done {
   background: #d4f7dc;
   color: #027a2f;
@@ -410,6 +425,14 @@
   background: #fee2e2;
   color: #b91c1c;
   border: 1.5px solid #fca5a5;
+}
+
+/* Fallback for a status that isn't one of the six known tags (e.g. a custom
+   phase label) — keeps every item header wearing a pill for visual
+   consistency instead of some items getting a badge and others plain text. */
+.presentation-slide .badge-neutral {
+  background: #eef1f5;
+  color: #475569;
 }
 
 /* Page transition — fadeIn + translateY, matching the docs reference deck */

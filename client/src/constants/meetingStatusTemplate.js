@@ -3,11 +3,17 @@ export function buildFollowUpTemplate() {
 
 * 項目 1｜**[事項名稱]**
   * Owner：[姓名]｜狀態：✅ Done
-  * Result：[簡短說明成果]
+  * Description：
+    * [簡短說明背景或問題，無則可刪除]
+  * Result：
+    * [簡短說明成果]
 
 * 項目 2｜**[事項名稱]**
   * Owner：[姓名]｜狀態：✅ Done
-  * Result：[簡短說明成果]
+  * Description：
+    * [簡短說明背景或問題，無則可刪除]
+  * Result：
+    * [簡短說明成果]
 
 > **補充說明**：
 > [整體性的補充說明，無則可刪除]

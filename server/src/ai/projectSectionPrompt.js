@@ -55,6 +55,7 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
    <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">。
 4. 內容要忠於原文、精煉但不省略任何一個子項目，只做語句層級的潤飾（去除贅字、修順語氣），不能新增原文沒有的內容或數字。
+5. 若 Owner、Product 名稱或子項目名稱前後殘留範本用的方括號（例如 Owner：[姓名]，代表使用者忘記刪除範本標記），輸出時去掉這對方括號、只保留裡面的文字。
 
 以下是一組範例：
 
