@@ -18,9 +18,9 @@ const EXAMPLE_OUTPUT = `<h1>🌐 DeviceOn</h1>
 <h2>On-Premise 核心服務（階段：Staging 驗證中）</h2>
 <ul>
   <li><span class="badge badge-new-done">🎉 NEW DONE</span> 完成 C/C++ 原始碼掃描與 SBOM 生成工具開發（搭配 Grype 掃描 CVE）</li>
-  <li><span class="badge badge-done">✅ DONE</span> 核心服務升級至 JDK 17</li>
   <li><span class="badge badge-wip">⏳ WIP</span> Ubuntu 26.04 Agent 支援開發中</li>
   <li><span class="badge badge-blocked">🚫 BLOCKED</span> Windows Agent 簽章流程卡在憑證申請</li>
+  <li><span class="badge badge-done">✅ DONE</span> 核心服務升級至 JDK 17</li>
 </ul>
 <div class="card warning">
   <ul>
@@ -49,6 +49,15 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 
 徽章放在該條 <li> 文字最前面。原文若有其他不在此表中的狀態文字，就照原樣輸出文字，不要硬套錯誤的徽章。
 
+嚴格排序規則（每個子項目的「本週進度」條列輸出時，必須依照徽章類型重新排序，不可照原文順序輸出；同一類型內的多筆項目維持原文相對順序）：
+1. 🎉 NEW DONE
+2. ⚡ UPDATED
+3. 🆕 NEW
+4. ⏳ WIP
+5. 🚫 BLOCKED
+6. ✅ DONE
+沒有標籤、或標籤不在轉換表中的項目（改用原樣文字輸出的情況），排在最後面，並維持原文相對順序。
+
 嚴格格式規則：
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 若輸出 2 頁，片段之間用一行 "<!-- SLIDE -->" 分隔。
@@ -67,7 +76,7 @@ ${EXAMPLE_INPUT}
 ${EXAMPLE_OUTPUT}
 </html-output-example>
 
-現在請將使用者提供的單一專案 Product Overall Status Markdown 轉換成同樣格式的 HTML 輸出，並嚴格遵守「預設 1 頁、標籤一比一轉換成對應徽章、風險與決策若有內容才附加在最後一頁」的規則。`;
+現在請將使用者提供的單一專案 Product Overall Status Markdown 轉換成同樣格式的 HTML 輸出，並嚴格遵守「預設 1 頁、標籤一比一轉換成對應徽章、每個子項目的條列依徽章類型排序（NEW DONE → UPDATED → NEW → WIP → BLOCKED → DONE）、風險與決策若有內容才附加在最後一頁」的規則。`;
 
 const RETRY_SUFFIX = `\n\n上一次的輸出未通過格式驗證（片段數量不是 1-2，或缺少標題標籤）。請重新輸出，務必嚴格遵守規則：用 <!-- SLIDE --> 分隔（若有第 2 頁）、每個片段至少包含一個 <h1> 或 <h2>、所有狀態標籤都要轉換成對應的 <span class="badge ...">。`;
 

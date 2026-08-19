@@ -156,6 +156,17 @@ const currentSlide = computed(() => {
 const isAtFirstDeckPage = () => currentPage.value === 0 && !presentation.hasPrevDeck;
 const isAtLastDeckPage = () => currentPage.value === presentation.pages.length - 1 && !presentation.hasNextDeck;
 
+// Fires the caller's onComplete once playback actually lands on the final
+// page of the final deck — not merely when the "next" button is clicked.
+watch(
+  () => [currentPage.value, presentation.deckIndex, presentation.pages.length],
+  () => {
+    if (presentation.pages.length > 0 && isAtLastDeckPage()) {
+      presentation.onComplete?.();
+    }
+  },
+);
+
 function prev() {
   if (currentPage.value > 0) {
     currentPage.value -= 1;

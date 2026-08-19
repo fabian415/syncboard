@@ -89,11 +89,11 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 | 原文標籤 | 對應輸出 |
 | --- | --- |
 | 🎉 [NEW DONE] | <span class="badge badge-new-done">🎉 NEW DONE</span> |
-| ✅ [DONE] / ✅ Done | <span class="badge badge-done">✅ DONE</span> |
 | ⚡ [UPDATED] | <span class="badge badge-updated">⚡ UPDATED</span> |
 | 🆕 [NEW] | <span class="badge badge-new">🆕 NEW</span> |
 | ⏳ [WIP] / ⏳ WIP | <span class="badge badge-wip">⏳ WIP</span> |
 | 🚫 [BLOCKED] | <span class="badge badge-blocked">🚫 BLOCKED</span> |
+| ✅ [DONE] / ✅ Done | <span class="badge badge-done">✅ DONE</span> |
 
 原文若有其他不在此表中的狀態文字（不論是項目本身的狀態、還是 Description／Result 子項目開頭的標籤），一律照原樣保留文字（含 emoji），不要硬套錯誤的顏色徽章；項目本身的狀態一律要用 <span class="badge badge-neutral">（見上方規則），子項目若沒有標籤則不加徽章。
 

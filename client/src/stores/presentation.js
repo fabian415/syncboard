@@ -13,6 +13,9 @@ export const usePresentationStore = defineStore('presentation', {
     title: '',
     onEdit: null,
     editLabel: '編輯內容',
+    // Called once playback reaches the last page of the last deck in the
+    // queue — lets callers (e.g. ShowcaseView) mark an item as fully played.
+    onComplete: null,
     // Search keyword to land on when opening, if any — PresentationModal
     // resolves this to a page index itself once pages are paginated.
     initialQuery: '',
@@ -33,7 +36,7 @@ export const usePresentationStore = defineStore('presentation', {
     open(pages, title, onEdit = null, { query = '', editLabel = '編輯內容' } = {}) {
       this.openQueue([{ title, pages }], { onEdit, query, editLabel });
     },
-    openQueue(decks, { onEdit = null, query = '', editLabel = '編輯內容' } = {}) {
+    openQueue(decks, { onEdit = null, query = '', editLabel = '編輯內容', onComplete = null } = {}) {
       this.rawDecks = (decks ?? [])
         .map((deck) => ({ title: deck.title, pages: filterMeaningfulSlides(deck.pages ?? []) }))
         .filter((deck) => deck.pages.length > 0);
@@ -43,6 +46,7 @@ export const usePresentationStore = defineStore('presentation', {
       this.onEdit = onEdit;
       this.editLabel = editLabel;
       this.initialQuery = query;
+      this.onComplete = onComplete;
       this.isOpen = true;
     },
     // Re-splits every deck's pages against the presentation viewport's real
@@ -64,6 +68,7 @@ export const usePresentationStore = defineStore('presentation', {
       this.isOpen = false;
       this.onEdit = null;
       this.editLabel = '編輯內容';
+      this.onComplete = null;
     },
   },
 });
