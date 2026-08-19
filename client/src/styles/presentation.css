@@ -29,14 +29,6 @@
   color: var(--p-text);
 }
 
-.presentation-title-sep {
-  color: var(--p-muted);
-}
-
-.presentation-slide-title {
-  opacity: 0.85;
-}
-
 .presentation-icon-muted {
   color: var(--p-muted);
 }
@@ -62,8 +54,135 @@
   color: var(--p-accent);
 }
 
+.presentation-body {
+  min-height: 0;
+}
+
 .presentation-stage {
   background: var(--p-bg);
+}
+
+/* Agenda sidebar — persists across slide/deck changes so it's always
+   obvious who's presenting now and who's up next. */
+.presentation-outline {
+  width: 120px;
+  background: var(--p-card);
+  border-right: 1px solid var(--p-border);
+  overflow-y: auto;
+  padding: 14px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #c8ccd1 transparent;
+}
+.presentation-outline::-webkit-scrollbar {
+  width: 6px;
+}
+.presentation-outline::-webkit-scrollbar-thumb {
+  background: #d0d7de;
+  border-radius: 4px;
+}
+
+.presentation-outline-header {
+  padding: 4px 10px 12px;
+}
+
+.presentation-outline-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--p-muted);
+}
+
+.presentation-outline-context {
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--p-text);
+}
+
+.presentation-outline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.presentation-outline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 10px 9px 7px;
+  border-left: 3px solid transparent;
+  border-radius: 0 10px 10px 0;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.presentation-outline-item:hover {
+  background: var(--p-accent-soft);
+}
+
+.presentation-outline-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 999px;
+  border: 1px solid var(--p-border);
+  background: var(--p-bg);
+  color: var(--p-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.presentation-outline-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.presentation-outline-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--p-text);
+}
+
+.presentation-outline-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--p-muted);
+}
+
+.presentation-outline-next {
+  color: var(--p-accent);
+  font-weight: 700;
+}
+
+.presentation-outline-item.is-current {
+  background: var(--p-accent-soft);
+  border-left-color: var(--p-accent);
+}
+.presentation-outline-item.is-current .presentation-outline-index {
+  background: var(--p-accent);
+  border-color: var(--p-accent);
+  color: #fff;
+}
+.presentation-outline-item.is-current .presentation-outline-title {
+  color: var(--p-accent);
+}
+
+.presentation-outline-item.is-done {
+  opacity: 0.5;
+}
+.presentation-outline-item.is-done .presentation-outline-index {
+  background: #eef2f0;
+  border-color: transparent;
+  color: #57705f;
+}
+
+.presentation-outline-item.is-next:not(.is-current) {
+  border-left-color: #93c5fd;
 }
 
 .presentation-nav-btn {
@@ -135,8 +254,8 @@
 .presentation-slide::-webkit-scrollbar-track {
   background: transparent;
 }
-/* Shown in the topbar (.presentation-slide-title) instead — kept out of the
-   scrollable body so it stays fixed as pages paginate. */
+/* Redundant with the deck/presenter identity already shown in the topbar
+   and outline sidebar, so it's dropped rather than rendered in the body. */
 .presentation-slide h1 {
   display: none;
 }
