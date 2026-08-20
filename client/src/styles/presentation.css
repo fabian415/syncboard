@@ -329,6 +329,9 @@
 .presentation-slide img {
   cursor: zoom-in;
   transition: opacity 0.15s ease;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 .presentation-slide img:hover {
   opacity: 0.85;
@@ -338,6 +341,20 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
+}
+
+/* Consecutive images from the source markdown (e.g. attached screenshots)
+   are grouped into one row instead of stacking full-width. */
+.presentation-slide .image-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+}
+.presentation-slide .image-row img {
+  flex: 1 1 calc(33.333% - 8px);
+  max-width: calc(33.333% - 8px);
+  object-fit: cover;
 }
 
 .presentation-slide .card {
@@ -482,6 +499,42 @@
 }
 .presentation-lightbox-close:hover {
   background: rgba(255, 255, 255, 0.22);
+}
+.presentation-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.presentation-lightbox-nav:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+.presentation-lightbox-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+  background: rgba(255, 255, 255, 0.12);
+}
+.presentation-lightbox-prev {
+  left: 24px;
+}
+.presentation-lightbox-next {
+  right: 24px;
+}
+.presentation-lightbox-count {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 4px 12px;
 }
 
 .lightbox-fade-enter-active,

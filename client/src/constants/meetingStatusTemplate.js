@@ -7,6 +7,9 @@ export function buildFollowUpTemplate() {
     * [簡短說明背景或問題，無則可刪除]
   * Result：
     * [簡短說明成果]
+      * [子項目，無則可刪除]
+    * ![圖片標題1](https://picsum.photos/600/400?random=1)
+    * ![圖片標題2](https://picsum.photos/600/400?random=2)
 
 * 項目 2｜**[事項名稱]**
   * Owner：[姓名]｜狀態：✅ Done
@@ -28,8 +31,12 @@ export function buildProjectSectionTemplate({ projectName }) {
 * **階段**：[目前所處階段]
 * **本週進度**：
   * 🎉 [NEW DONE] [本週全新完成的項目]
+    * [子項目補充說明，無則可刪除]
   * ✅ [DONE] [之前就已完成的背景資訊]
   * ⏳ [WIP] [正常進行中的項目]
+
+![圖片標題1](https://picsum.photos/600/400?random=1)
+![圖片標題2](https://picsum.photos/600/400?random=2)
 
 ---
 * **⚠️ 風險與阻礙**：無

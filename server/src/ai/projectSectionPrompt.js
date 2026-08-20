@@ -5,9 +5,13 @@ const EXAMPLE_INPUT = `### 🌐 DeviceOn
 * **階段**：Staging 驗證中
 * **本週進度**：
   * 🎉 [NEW DONE] 完成 C/C++ 原始碼掃描與 SBOM 生成工具開發（搭配 Grype 掃描 CVE）
+    * 掃描涵蓋範圍包含所有 C/C++ 微服務與第三方相依套件
   * ✅ [DONE] 核心服務升級至 JDK 17
   * ⏳ [WIP] Ubuntu 26.04 Agent 支援開發中
   * 🚫 [BLOCKED] Windows Agent 簽章流程卡在憑證申請
+
+![SBOM 掃描結果](https://example.com/img-sbom.png)
+![CVE 修復前後比較](https://example.com/img-cve.png)
 
 ---
 * **⚠️ 風險與阻礙**：無
@@ -17,11 +21,19 @@ const EXAMPLE_OUTPUT = `<h1>🌐 DeviceOn</h1>
 <h2>Owner：Alex</h2>
 <h2>On-Premise 核心服務（階段：Staging 驗證中）</h2>
 <ul>
-  <li><span class="badge badge-new-done">🎉 NEW DONE</span> 完成 C/C++ 原始碼掃描與 SBOM 生成工具開發（搭配 Grype 掃描 CVE）</li>
+  <li><span class="badge badge-new-done">🎉 NEW DONE</span> 完成 C/C++ 原始碼掃描與 SBOM 生成工具開發（搭配 Grype 掃描 CVE）
+    <ul>
+      <li>掃描涵蓋範圍包含所有 C/C++ 微服務與第三方相依套件</li>
+    </ul>
+  </li>
   <li><span class="badge badge-wip">⏳ WIP</span> Ubuntu 26.04 Agent 支援開發中</li>
   <li><span class="badge badge-blocked">🚫 BLOCKED</span> Windows Agent 簽章流程卡在憑證申請</li>
   <li><span class="badge badge-done">✅ DONE</span> 核心服務升級至 JDK 17</li>
 </ul>
+<div class="image-row">
+  <img src="https://example.com/img-sbom.png" alt="SBOM 掃描結果">
+  <img src="https://example.com/img-cve.png" alt="CVE 修復前後比較">
+</div>
 <div class="card warning">
   <ul>
     <li><strong>💡 需要的決策或協助</strong>：需要法務盡快核准 Windows 簽章憑證申請</li>
@@ -49,22 +61,15 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 
 徽章放在該條 <li> 文字最前面。原文若有其他不在此表中的狀態文字，就照原樣輸出文字，不要硬套錯誤的徽章。
 
-嚴格排序規則（每個子項目的「本週進度」條列輸出時，必須依照徽章類型重新排序，不可照原文順序輸出；同一類型內的多筆項目維持原文相對順序）：
-1. 🎉 NEW DONE
-2. ⚡ UPDATED
-3. 🆕 NEW
-4. ⏳ WIP
-5. 🚫 BLOCKED
-6. ✅ DONE
-沒有標籤、或標籤不在轉換表中的項目（改用原樣文字輸出的情況），排在最後面，並維持原文相對順序。
-
 嚴格格式規則：
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 若輸出 2 頁，片段之間用一行 "<!-- SLIDE -->" 分隔。
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
-   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">。
+   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">。
 4. 內容要忠於原文、精煉但不省略任何一個子項目，只做語句層級的潤飾（去除贅字、修順語氣），不能新增原文沒有的內容或數字。
 5. 若 Owner、Product 名稱或子項目名稱前後殘留範本用的方括號（例如 Owner：[姓名]，代表使用者忘記刪除範本標記），輸出時去掉這對方括號、只保留裡面的文字。
+6. 「本週進度」條列項目底下若有更深一層縮排的子項目（純文字，沒有狀態標籤），輸出時要包成巢狀的 <ul><li>...</li></ul>，放在該狀態項目的 <li> 內部；子項目內容忠於原文，只做語句層級的微幅潤飾，不能省略。
+7. 原文中若有獨立成行的圖片語法 \`![替代文字](網址)\`（該行本身只有圖片語法），要轉換成 <img src="網址" alt="替代文字">，放在其所屬 📦 子項目「本週進度」清單之後、下一個 📦 子項目（或結尾的「⚠️ 風險與阻礙」「💡 需要的決策或協助」）之前。若同一位置有 2 張以上連續的圖片，要包在同一個 <div class="image-row"> 裡讓它們並排顯示；只有 1 張時直接輸出 <img>，不需要用 <div class="image-row"> 包裹。不能省略任何一張圖片。
 
 以下是一組範例：
 
@@ -76,7 +81,7 @@ ${EXAMPLE_INPUT}
 ${EXAMPLE_OUTPUT}
 </html-output-example>
 
-現在請將使用者提供的單一專案 Product Overall Status Markdown 轉換成同樣格式的 HTML 輸出，並嚴格遵守「預設 1 頁、標籤一比一轉換成對應徽章、每個子項目的條列依徽章類型排序（NEW DONE → UPDATED → NEW → WIP → BLOCKED → DONE）、風險與決策若有內容才附加在最後一頁」的規則。`;
+現在請將使用者提供的單一專案 Product Overall Status Markdown 轉換成同樣格式的 HTML 輸出，並嚴格遵守「預設 1 頁、標籤一比一轉換成對應徽章、風險與決策若有內容才附加在最後一頁」的規則。`;
 
 const RETRY_SUFFIX = `\n\n上一次的輸出未通過格式驗證（片段數量不是 1-2，或缺少標題標籤）。請重新輸出，務必嚴格遵守規則：用 <!-- SLIDE --> 分隔（若有第 2 頁）、每個片段至少包含一個 <h1> 或 <h2>、所有狀態標籤都要轉換成對應的 <span class="badge ...">。`;
 

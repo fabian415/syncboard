@@ -1,12 +1,13 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ListChecks, Folder, Presentation, Pencil, Check, X, RotateCcw } from 'lucide-vue-next';
+import { ListChecks, Folder, Presentation, Pencil, Check, X, RotateCcw, Download, Loader2, ChevronDown } from 'lucide-vue-next';
 import { useMeetingStatusStore } from '../stores/meetingStatus.js';
 import { usePresentationStore } from '../stores/presentation.js';
 import { usePlaybackStore } from '../stores/playback.js';
 import { useUiStore } from '../stores/ui.js';
 import { todayISO } from '../utils/date.js';
+import { buildSlidesExportHtml, buildSlidesExportMarkdown } from '../utils/exportSlides.js';
 import * as meetingStatusApi from '../api/meetingStatus.js';
 import * as meetingDatesApi from '../api/meetingDates.js';
 import ShowcaseItemCard from '../components/showcase/ShowcaseItemCard.vue';
@@ -150,6 +151,68 @@ async function playProject(project) {
 function resetPlayback() {
   playback.resetAll();
 }
+
+const isExporting = ref(false);
+const showExportMenu = ref(false);
+
+async function collectAllDecks() {
+  const decks = [];
+
+  const { pages: followUpPages } = await meetingStatusApi.getSectionPresentation(date.value, 'follow-up');
+  if (followUpPages?.length) decks.push({ title: 'Follow-up Items', pages: followUpPages });
+
+  const projects = meetingStatus.overview?.projects ?? [];
+  for (const project of projects.filter((p) => p.sectionGenerated)) {
+    const { pages } = await meetingStatusApi.getSectionPresentation(date.value, `project-${project.projectId}`);
+    if (pages?.length) decks.push({ title: `${project.name}－Product Overall Status`, pages });
+  }
+
+  for (const project of projects) {
+    const result = await meetingStatusApi.getShowcaseProjectPlaylist(date.value, project.projectId);
+    for (const member of result.members ?? []) {
+      if (member.pages?.length) decks.push({ title: `${result.name}－${member.name}`, pages: member.pages });
+    }
+  }
+
+  return decks;
+}
+
+function downloadFile(content, mimeType, filename) {
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function exportAs(format) {
+  if (ui.isLoading || isExporting.value) return;
+  showExportMenu.value = false;
+  error.value = '';
+  isExporting.value = true;
+  ui.start(format === 'markdown' ? '匯出 Markdown 文件中...' : '匯出投影片中...');
+  try {
+    const decks = await collectAllDecks();
+    if (decks.length === 0) {
+      error.value = '目前沒有可匯出的投影片';
+      return;
+    }
+
+    if (format === 'markdown') {
+      const markdown = buildSlidesExportMarkdown(decks, date.value);
+      downloadFile(markdown, 'text/markdown', `成果展示-${date.value}.md`);
+    } else {
+      const html = buildSlidesExportHtml(decks, date.value);
+      downloadFile(html, 'text/html', `成果展示-${date.value}.html`);
+    }
+  } catch (err) {
+    error.value = err.response?.data?.error || '匯出失敗';
+  } finally {
+    isExporting.value = false;
+    ui.stop();
+  }
+}
 </script>
 
 <template>
@@ -204,15 +267,51 @@ function resetPlayback() {
         <p v-if="dateError" class="mt-1 text-xs text-red-600">{{ dateError }}</p>
       </div>
 
-      <button
-        type="button"
-        class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
-        title="重置所有播放紀錄"
-        @click="resetPlayback"
-      >
-        <RotateCcw class="w-3.5 h-3.5" />
-        重置播放紀錄
-      </button>
+      <div class="shrink-0 flex items-center gap-2">
+        <div class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            title="將所有會議內容匯出成投影片或 Markdown 文件"
+            :disabled="isExporting"
+            @click="showExportMenu = !showExportMenu"
+          >
+            <Loader2 v-if="isExporting" class="w-3.5 h-3.5 animate-spin" />
+            <Download v-else class="w-3.5 h-3.5" />
+            匯出
+            <ChevronDown class="w-3.5 h-3.5" />
+          </button>
+
+          <template v-if="showExportMenu">
+            <div class="fixed inset-0 z-10" @click="showExportMenu = false"></div>
+            <div class="absolute right-0 mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-20 py-1">
+              <button
+                type="button"
+                class="w-full flex items-center px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50"
+                @click="exportAs('slides')"
+              >
+                投影片
+              </button>
+              <button
+                type="button"
+                class="w-full flex items-center px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50"
+                @click="exportAs('markdown')"
+              >
+                Markdown 文件
+              </button>
+            </div>
+          </template>
+        </div>
+        <button
+          type="button"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors"
+          title="重置所有播放紀錄"
+          @click="resetPlayback"
+        >
+          <RotateCcw class="w-3.5 h-3.5" />
+          重置播放紀錄
+        </button>
+      </div>
     </div>
 
     <p v-if="error" class="text-sm text-red-600">{{ error }}</p>

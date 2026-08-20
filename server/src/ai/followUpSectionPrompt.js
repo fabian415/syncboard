@@ -13,6 +13,8 @@ const EXAMPLE_INPUT = `## 1. Follow-up
     * ✅ [DONE] 已完成介面設計稿
     * 🎉 [NEW DONE] 完成表單元件開發
     * ⏳ [WIP] 下週開始串接後端 API
+    * ![介面設計稿截圖](https://example.com/img-ui-1.png)
+    * ![表單元件截圖](https://example.com/img-ui-2.png)
 
 * 項目 3｜**Version 1.1 Announce**
   * Owner：TungYi｜狀態：⏳ Ongoing
@@ -49,6 +51,10 @@ const EXAMPLE_OUTPUT = `<h1>Follow-up</h1>
     </ul>
   </li>
 </ul>
+<div class="image-row">
+  <img src="https://example.com/img-ui-1.png" alt="介面設計稿截圖">
+  <img src="https://example.com/img-ui-2.png" alt="表單元件截圖">
+</div>
 <h2><strong>Version 1.1 Announce</strong>（Owner：TungYi）<span class="badge badge-neutral">⏳ Ongoing</span></h2>
 <ul>
   <li><strong>Result</strong>
@@ -71,7 +77,7 @@ const EXAMPLE_OUTPUT = `<h1>Follow-up</h1>
 
 const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把主管（會議主持人）填寫的「Follow-up 追蹤事項」Markdown 區塊，轉換成全螢幕簡報用的 HTML 片段。
 
-輸入格式固定為："## 1. Follow-up" 開頭，底下依序列出多個追蹤項目（"* 項目 N｜**事項名稱**"，各自帶 Owner／狀態，可能有 Description／Result），結尾可能有 "> **補充說明**：" 區塊。Description、Result 底下可能各自帶一層或多層縮排的子項目（子清單），代表該欄位下的細項或補充要點，可能有一項也可能有多項；這些子項目的文字開頭也可能自帶一個狀態標籤（例如 "✅ [DONE] ..."、"🎉 [NEW DONE] ..."），代表這一條細項各自的進度。輸入內容結尾若有 HTML 註解（<!-- ... -->）純粹是標籤說明，必須完全忽略，不可當作內容處理。
+輸入格式固定為："## 1. Follow-up" 開頭，底下依序列出多個追蹤項目（"* 項目 N｜**事項名稱**"，各自帶 Owner／狀態，可能有 Description／Result），結尾可能有 "> **補充說明**：" 區塊。Description、Result 底下可能各自帶一層或多層縮排的子項目（子清單），代表該欄位下的細項或補充要點，可能有一項也可能有多項；這些子項目的文字開頭也可能自帶一個狀態標籤（例如 "✅ [DONE] ..."、"🎉 [NEW DONE] ..."），代表這一條細項各自的進度。子項目也可能整條就是圖片語法 \`![替代文字](網址)\`，代表附加的截圖或附件。輸入內容結尾若有 HTML 註解（<!-- ... -->）純粹是標籤說明，必須完全忽略，不可當作內容處理。
 
 輸出樣式規則（每個追蹤項目各自一個標題＋清單區塊，仿照範例的排版，不要輸出成單一大清單）：
 1. 只在第 1 頁輸出一次 <h1>Follow-up</h1>，之後每頁不重複輸出這個標題。
@@ -81,6 +87,7 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
    - 若狀態欄位的文字不在轉換表中（例如「驗證中」「開發中」「Ongoing」這類自訂階段描述，不要硬套錯誤的顏色徽章），改用 <span class="badge badge-neutral">原文字（含 emoji，原樣保留）</span> 當作通用徽章，一樣放在整行最後面，不要把它留在括號內當純文字。
    - <h2> 底下緊接著一個 <ul>，Description、Result 各自輸出為一個子項目 <li>（依原文先後順序，文字固定用 <strong>Description</strong>、<strong>Result</strong>，只輸出出現在原文中的欄位，沒有的就不輸出那個 <li>），該 <li> 底下再接一層巢狀 <ul>，把該欄位原文的子項目原樣依縮排層級對應轉成 <li>（子項目 → 次項目 → 更下一層…，原文縮排幾層就巢狀幾層 <ul>），逐條列出、不可省略、合併或攤平成同一層。
    - 每一條子項目（不論在哪一層）若原文開頭帶有狀態標籤（見下方轉換表），要把該標籤轉換成對應的 <span class="badge ...">，放在該 <li> 文字最前面；若該條子項目原文沒有帶標籤，就直接輸出文字，不要自己編造或硬套一個標籤。
+   - Description、Result 底下若有子項目本身就是圖片語法 \`![替代文字](網址)\`（該行只有圖片語法，沒有其他文字），**絕對不能**把它輸出成 <li>、也不能放進任何 <ul> 或 <li> 裡面。要把該追蹤項目底下出現的所有這類圖片（不論來自 Description 或 Result，依原文先後順序）收集起來，改在該項目的 <h2>...</h2><ul>...</ul> 結構之後（即該事項最外層 </ul> 結束、下一個事項 <h2> 或補充說明卡片之前）另外輸出一個區塊：2 張以上圖片要包在同一個 <div class="image-row"> 裡讓它們並排顯示；只有 1 張時直接輸出 <img>，不需要用 <div class="image-row"> 包裹。不能省略任何一張圖片。
 3. 若項目數量多或內容龐大導致單頁明顯放不下，依邏輯分組拆成多頁（每頁延續同樣的 <h2><ul> 結構），避免單頁塞爆、難以閱讀。分頁時不可把同一個項目的標題與清單拆到兩頁。
 4. 「補充說明」若內容是「無」則完全省略；若有實際內容，附加在**最後一頁**結尾，用 <div class="card"> 包住。
 5. 絕不能遺漏、合併或重複任何一個追蹤項目或其子項目，只做語句層級的潤飾（去除贅字、修順語氣），不能新增原文沒有的內容或數字。
@@ -101,7 +108,7 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 若輸出多頁，片段之間用一行 "<!-- SLIDE -->" 分隔。
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
-   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">, <span class="badge badge-neutral">。
+   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">, <span class="badge badge-neutral">。
 4. 內容要忠於原文、精煉但不省略任何一個追蹤項目，只做語句層級的潤飾，不能新增原文沒有的內容或數字。
 5. 若事項名稱或 Owner 前後殘留範本用的方括號（例如 **[事項名稱]**、Owner：[姓名]，代表使用者忘記刪除範本標記），輸出時去掉這對方括號、只保留裡面的文字。
 

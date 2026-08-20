@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { X, Pencil, PanelLeftClose, PanelLeftOpen, Check } from 'lucide-vue-next';
+import { X, Pencil, PanelLeftClose, PanelLeftOpen, Check, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { usePresentationStore } from '../../stores/presentation.js';
 import { findSlideIndexContaining } from '../../utils/slides.js';
 
@@ -184,9 +184,22 @@ function next() {
   }
 }
 
-const lightboxSrc = ref(null);
+// The lightbox browses every image on the current slide page (not the whole
+// deck), so the list is captured fresh from that slide's DOM each time it opens.
+const lightboxImages = ref([]);
+const lightboxIndex = ref(null);
+const lightboxSrc = computed(() =>
+  lightboxIndex.value === null ? null : lightboxImages.value[lightboxIndex.value] ?? null,
+);
 function closeLightbox() {
-  lightboxSrc.value = null;
+  lightboxIndex.value = null;
+  lightboxImages.value = [];
+}
+function lightboxPrev() {
+  if (lightboxIndex.value > 0) lightboxIndex.value -= 1;
+}
+function lightboxNext() {
+  if (lightboxIndex.value < lightboxImages.value.length - 1) lightboxIndex.value += 1;
 }
 
 function handleKeydown(e) {
@@ -196,7 +209,11 @@ function handleKeydown(e) {
     else presentation.close();
     return;
   }
-  if (lightboxSrc.value) return;
+  if (lightboxIndex.value !== null) {
+    if (e.key === 'ArrowRight') lightboxNext();
+    else if (e.key === 'ArrowLeft') lightboxPrev();
+    return;
+  }
   if (e.key === 'ArrowRight') next();
   else if (e.key === 'ArrowLeft') prev();
 }
@@ -211,7 +228,9 @@ function handleSlideClick(e) {
   const img = e.target.closest('img[src]');
   if (img) {
     e.preventDefault();
-    lightboxSrc.value = img.src;
+    const images = Array.from(e.currentTarget.querySelectorAll('img[src]'));
+    lightboxImages.value = images.map((el) => el.src);
+    lightboxIndex.value = images.indexOf(img);
   }
 }
 
@@ -338,7 +357,28 @@ onUnmounted(() => {
         <button class="presentation-lightbox-close" title="關閉" @click="closeLightbox">
           <X class="w-5 h-5" />
         </button>
+        <button
+          v-if="lightboxImages.length > 1"
+          class="presentation-lightbox-nav presentation-lightbox-prev"
+          title="上一張圖"
+          :disabled="lightboxIndex === 0"
+          @click.stop="lightboxPrev"
+        >
+          <ChevronLeft class="w-5 h-5" />
+        </button>
         <img :src="lightboxSrc" class="presentation-lightbox-img" @click.stop />
+        <button
+          v-if="lightboxImages.length > 1"
+          class="presentation-lightbox-nav presentation-lightbox-next"
+          title="下一張圖"
+          :disabled="lightboxIndex === lightboxImages.length - 1"
+          @click.stop="lightboxNext"
+        >
+          <ChevronRight class="w-5 h-5" />
+        </button>
+        <span v-if="lightboxImages.length > 1" class="presentation-lightbox-count">
+          {{ lightboxIndex + 1 }} / {{ lightboxImages.length }}
+        </span>
       </div>
     </Transition>
   </div>
