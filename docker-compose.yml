@@ -17,26 +17,26 @@ services:
       timeout: 5s
       retries: 10
 
-  # backend:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: syncboard-backend
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ./server/.env
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3003
-  #     DATABASE_URL: postgresql://${POSTGRES_USER:-syncboard}:${POSTGRES_PASSWORD:-syncboard}@postgres:5432/${POSTGRES_DB:-syncboard}?schema=public
-  #     STORAGE_ROOT: ../storage
-  #   ports:
-  #     - "3003:3003"
-  #   volumes:
-  #     - ./storage:/app/storage
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: syncboard-backend
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL: postgresql://${POSTGRES_USER:-syncboard}:${POSTGRES_PASSWORD:-syncboard}@postgres:5432/${POSTGRES_DB:-syncboard}?schema=public
+      STORAGE_ROOT: ../storage
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
