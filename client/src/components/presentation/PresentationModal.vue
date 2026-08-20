@@ -15,6 +15,20 @@ const paginated = ref(false);
 // presenters and audience always know who's up now and who's next.
 const outlineOpen = ref(true);
 const outlineItemRefs = ref([]);
+
+// One-shot "your turn" cue on the outline row a deck switch just landed on.
+// Set explicitly at the navigation call sites (not via a deckIndex watcher)
+// so opening a fresh presentation — which also changes deckIndex — never
+// falsely flashes deck 0 as "just switched".
+const recentlyChangedDeck = ref(null);
+let recentlyChangedTimer = null;
+function flashDeckSwitch(index) {
+  clearTimeout(recentlyChangedTimer);
+  recentlyChangedDeck.value = index;
+  recentlyChangedTimer = setTimeout(() => {
+    recentlyChangedDeck.value = null;
+  }, 3000);
+}
 function setOutlineItemRef(el, index) {
   if (el) outlineItemRefs.value[index] = el;
 }
@@ -94,6 +108,7 @@ function jumpToDeck(index) {
   if (index === presentation.deckIndex) return;
   presentation.goToDeck(index);
   currentPage.value = 0;
+  flashDeckSwitch(index);
 }
 
 // Keeps the current deck's outline entry scrolled into view as playback
@@ -171,16 +186,20 @@ function prev() {
   if (currentPage.value > 0) {
     currentPage.value -= 1;
   } else if (presentation.hasPrevDeck) {
-    presentation.goToDeck(presentation.deckIndex - 1);
+    const targetIndex = presentation.deckIndex - 1;
+    presentation.goToDeck(targetIndex);
     currentPage.value = presentation.pages.length - 1;
+    flashDeckSwitch(targetIndex);
   }
 }
 function next() {
   if (currentPage.value < presentation.pages.length - 1) {
     currentPage.value += 1;
   } else if (presentation.hasNextDeck) {
-    presentation.goToDeck(presentation.deckIndex + 1);
+    const targetIndex = presentation.deckIndex + 1;
+    presentation.goToDeck(targetIndex);
     currentPage.value = 0;
+    flashDeckSwitch(targetIndex);
   }
 }
 
@@ -248,6 +267,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
   window.removeEventListener('resize', handleResize);
   clearTimeout(resizeTimer);
+  clearTimeout(recentlyChangedTimer);
   document.body.style.overflow = 'auto';
 });
 </script>
@@ -299,6 +319,7 @@ onUnmounted(() => {
               'is-current': index === presentation.deckIndex,
               'is-done': index < presentation.deckIndex,
               'is-next': index === presentation.deckIndex + 1,
+              'is-just-switched': index === recentlyChangedDeck,
             }"
             @click="jumpToDeck(index)"
           >
@@ -314,6 +335,7 @@ onUnmounted(() => {
               <div v-else-if="index === presentation.deckIndex + 1" class="presentation-outline-meta presentation-outline-next">
                 接下來
               </div>
+              <div class="presentation-outline-turn-pill">換你了</div>
             </div>
           </li>
         </ol>

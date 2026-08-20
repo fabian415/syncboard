@@ -15,6 +15,13 @@
   --p-border: #e2e8f0;
   --p-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
 
+  /* Transient "a deck switch just landed here" cue — kept a distinct warm
+     hue from --p-accent so "this is current" (steady, blue) and "this just
+     changed" (momentary, amber) never read as the same signal. */
+  --p-alert: #f59e0b;
+  --p-alert-soft: #fff7e6;
+  --p-alert-ring: rgba(245, 158, 11, 0.9);
+
   background: var(--p-bg);
 }
 
@@ -193,6 +200,81 @@
 
 .presentation-outline-item.is-next:not(.is-current) {
   border-left-color: #93c5fd;
+}
+
+/* One-shot cue on the row a deck switch just landed on — set by
+   PresentationModal's flashDeckSwitch() and cleared 3s later (see the
+   matching timeout there), so it always plays once and settles back into
+   the plain .is-current look above rather than looping. */
+.presentation-outline-item.is-just-switched {
+  animation: outline-row-flash 1.35s ease-out forwards;
+}
+@keyframes outline-row-flash {
+  0% { background: var(--p-alert-soft); }
+  100% { background: var(--p-accent-soft); }
+}
+
+.presentation-outline-item.is-just-switched .presentation-outline-index {
+  animation: outline-index-ping 0.85s ease-out 3 forwards;
+}
+@keyframes outline-index-ping {
+  0% { box-shadow: 0 0 0 0 var(--p-alert-ring); }
+  100% { box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); }
+}
+
+.presentation-outline-turn-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #92400e;
+  background: var(--p-alert-soft);
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 0 8px 0 6px;
+  margin-top: 0;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.presentation-outline-item.is-just-switched .presentation-outline-turn-pill {
+  animation:
+    outline-pill-in 0.33s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    outline-pill-out 0.45s ease-in 2.55s forwards;
+}
+@keyframes outline-pill-in {
+  to { opacity: 1; transform: translateY(0); max-height: 20px; margin-top: 4px; padding-top: 2px; padding-bottom: 2px; }
+}
+@keyframes outline-pill-out {
+  to { opacity: 0; transform: translateY(-4px); max-height: 0; margin-top: 0; padding-top: 0; padding-bottom: 0; }
+}
+
+/* Accessible fallback — no scale, no expanding ring, no slide-in. A single
+   held colour change plus the (already textual) pill still communicates
+   the same "this just changed" event without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .presentation-outline-item.is-just-switched,
+  .presentation-outline-item.is-just-switched .presentation-outline-index {
+    animation: none;
+  }
+  .presentation-outline-item.is-just-switched {
+    background: var(--p-alert-soft);
+    transition: background 2.7s ease;
+  }
+  .presentation-outline-item.is-just-switched .presentation-outline-turn-pill {
+    animation: none;
+    transition: opacity 0.2s ease;
+    opacity: 1;
+    max-height: 20px;
+    margin-top: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    transform: none;
+  }
 }
 
 .presentation-nav-btn {
