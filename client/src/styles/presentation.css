@@ -369,9 +369,19 @@
 .presentation-slide li {
   position: relative;
   /* margin-bottom: 14px; */
-  padding-left: 1.2em;
+  padding: 4px 10px 4px 1.2em;
+  margin-left: -10px;
   line-height: 1.6;
   font-size: 1.1rem;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+/* :hover bubbles up to ancestor <li> elements too, so a nested bullet would
+   otherwise highlight itself AND every parent bullet around it. Excluding
+   any li that contains a hovered li keeps the highlight on just the one
+   line the cursor is actually over. */
+.presentation-slide li:hover:not(:has(li:hover)) {
+  background-color: rgba(37, 99, 235, 0.14);
 }
 .presentation-slide li::before {
   content: '•';
