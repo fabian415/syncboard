@@ -20,8 +20,17 @@ RUN npm prune --omit=dev
 
 # ---- Stage 2: runtime image ----
 FROM node:20-bookworm-slim AS runtime
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
-  && rm -rf /var/lib/apt/lists/*
+# Deep Dive PPTX->slide-image conversion (server/src/deepDive/pptxConverter.js):
+# the actual LibreOffice conversion runs in the separate `unoserver` sidecar
+# container (docker/unoserver/Dockerfile) so this image doesn't carry its
+# ~300-500MB footprint. This image only needs the lightweight `unoconvert`
+# client (talks to the sidecar over the compose network — no local `uno`/
+# LibreOffice install needed for the client side) plus poppler-utils to
+# rasterize the PDF the sidecar returns into per-slide PNGs.
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    openssl poppler-utils python3-pip \
+  && rm -rf /var/lib/apt/lists/* \
+  && pip install --break-system-packages --no-cache-dir unoserver
 ENV NODE_ENV=production
 WORKDIR /app
 

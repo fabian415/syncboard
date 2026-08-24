@@ -11,6 +11,10 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      '/deep-dive-assets': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 });

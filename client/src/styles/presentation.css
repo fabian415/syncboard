@@ -544,6 +544,22 @@
   color: #475569;
 }
 
+/* Deep Dive PPTX slides — each page is a single converted slide image
+   (server-rendered via LibreOffice/poppler), so it's centered/contained
+   instead of laid out like a text slide. */
+.deep-dive-pptx-slide {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.deep-dive-pptx-slide img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /* Page transition — fadeIn + translateY, matching the docs reference deck */
 .slide-fade-enter-active,
 .slide-fade-leave-active {

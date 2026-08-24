@@ -337,18 +337,13 @@ async function exportAs(format) {
         @click="playProject(project)"
       />
 
-      <div class="w-full flex items-center gap-4 px-5 py-4 bg-white rounded-xl border border-gray-200 opacity-70 cursor-not-allowed">
-        <div class="p-2.5 rounded-lg bg-gray-100 text-gray-400 shrink-0">
-          <Presentation class="w-5 h-5" />
-        </div>
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <h3 class="font-bold text-gray-900">Deep Dive & 技術分享</h3>
-            <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">尚未實作</span>
-          </div>
-          <p class="text-sm text-gray-500 mt-0.5">技術分享與深度探討</p>
-        </div>
-      </div>
+      <ShowcaseItemCard
+        :icon="Presentation"
+        title="Deep Dive & 技術分享"
+        tag="分享"
+        description="瀏覽並播放本次會議上傳的技術分享資源"
+        @click="router.push(`/showcase/deep-dive?period=${date}`)"
+      />
     </div>
   </div>
 </template>

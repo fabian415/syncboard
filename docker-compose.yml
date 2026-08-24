@@ -17,6 +17,25 @@ services:
       timeout: 5s
       retries: 10
 
+  # Dedicated LibreOffice conversion sidecar for Deep Dive PPTX playback.
+  # Kept separate from clawpm-unoserver (a different compose project) —
+  # distinct container name and no host port published, so it can't collide
+  # with that container's name or its host-published :2003.
+  unoserver:
+    build:
+      context: ./docker/unoserver
+    image: syncboard-unoserver:latest
+    container_name: syncboard-unoserver
+    restart: unless-stopped
+    expose:
+      - "2003"
+    # Published to the host (on 2004, since host :2003 is already taken by
+    # the unrelated clawpm-unoserver project) so a backend running outside
+    # Docker (local dev) can reach it directly instead of needing its own
+    # LibreOffice/unoserver stack.
+    ports:
+      - "2004:2003"
+
   backend:
     build:
       context: .
@@ -30,6 +49,8 @@ services:
       PORT: 3003
       DATABASE_URL: postgresql://${POSTGRES_USER:-syncboard}:${POSTGRES_PASSWORD:-syncboard}@postgres:5432/${POSTGRES_DB:-syncboard}?schema=public
       STORAGE_ROOT: ../storage
+      UNOSERVER_HOST: unoserver
+      UNOSERVER_PORT: 2003
     ports:
       - "3003:3003"
     volumes:
@@ -37,6 +58,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      unoserver:
+        condition: service_started
 
 volumes:
   pgdata:

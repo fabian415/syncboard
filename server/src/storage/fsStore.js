@@ -96,6 +96,52 @@ export function combinedHtmlPath(projectName, date) {
   return path.join(combinedDir(projectName, date), 'combined.html');
 }
 
+// Deep Dive assets are keyed by a server-generated UUID (not a user-supplied
+// name), so unlike reportDir/combinedDir there's no untrusted name segment
+// to sanitize here — assertValidDate is the only guard needed.
+export function deepDiveDir(date) {
+  assertValidDate(date);
+  return path.join(STORAGE_ROOT, '_deep-dive', date);
+}
+
+export function deepDiveAssetDir(date, assetId) {
+  return path.join(deepDiveDir(date), assetId);
+}
+
+export function deepDiveOriginalPath(date, assetId, ext) {
+  return path.join(deepDiveAssetDir(date, assetId), `original.${ext}`);
+}
+
+export function deepDiveSlidesDir(date, assetId) {
+  return path.join(deepDiveAssetDir(date, assetId), 'slides');
+}
+
+export function deepDiveSlidePath(date, assetId, n) {
+  return path.join(deepDiveSlidesDir(date, assetId), `slide-${n}.png`);
+}
+
+// Static-mount root for express.static — only this subtree is ever served
+// as raw files. Kept separate from deepDiveUploadStagingDir() so in-progress
+// or abandoned tus uploads are never web-reachable.
+export function deepDiveStaticRoot() {
+  return path.join(STORAGE_ROOT, '_deep-dive');
+}
+
+export function deepDiveUploadStagingDir() {
+  return path.join(STORAGE_ROOT, '_deep-dive-uploads');
+}
+
+// Converts an absolute fs path under deepDiveStaticRoot() into the
+// root-relative URL the express.static mount serves it at.
+export function deepDivePublicUrl(absPath) {
+  const rel = path.relative(deepDiveStaticRoot(), absPath).split(path.sep).join('/');
+  return `/deep-dive-assets/${rel}`;
+}
+
+export async function removeDir(dirPath) {
+  await fs.rm(dirPath, { recursive: true, force: true });
+}
+
 export async function readTextFile(filePath) {
   try {
     return await fs.readFile(filePath, 'utf-8');

@@ -3,12 +3,14 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { CalendarClock, ListChecks, Folder, Presentation } from 'lucide-vue-next';
 import { useMeetingStatusStore } from '../stores/meetingStatus.js';
+import { useDeepDiveStore } from '../stores/deepDive.js';
 import { todayISO } from '../utils/date.js';
 import StatusCard from '../components/manager/StatusCard.vue';
 
 const route = useRoute();
 const router = useRouter();
 const meetingStatus = useMeetingStatusStore();
+const deepDive = useDeepDiveStore();
 
 const PERIOD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const date = PERIOD_RE.test(route.query.period) ? route.query.period : todayISO();
@@ -17,7 +19,7 @@ const isInitialLoading = ref(true);
 
 onMounted(async () => {
   try {
-    await meetingStatus.loadOverview(date);
+    await Promise.all([meetingStatus.loadOverview(date), deepDive.loadAssets(date)]);
   } finally {
     isInitialLoading.value = false;
   }
@@ -29,6 +31,10 @@ function goToFollowUp() {
 
 function goToProject(projectId) {
   router.push(`/meeting-status/projects/${projectId}?period=${date}`);
+}
+
+function goToDeepDive() {
+  router.push(`/meeting-status/deep-dive?period=${date}`);
 }
 </script>
 
@@ -78,7 +84,8 @@ function goToProject(projectId) {
         tag="分享"
         title="Deep Dive & 技術分享"
         description="技術分享與深度探討"
-        disabled
+        :filled="deepDive.hasAssets"
+        @click="goToDeepDive"
       />
     </div>
   </div>

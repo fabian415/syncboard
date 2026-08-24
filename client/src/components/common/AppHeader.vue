@@ -23,9 +23,10 @@ const MEETING_STATUS_ROUTES = [
   'meeting-status-follow-up',
   'meeting-status-project',
   'meeting-status-project-edit',
+  'meeting-status-deep-dive',
 ];
 const MEMBERS_ROUTES = ['members', 'my-report'];
-const SHOWCASE_ROUTES = ['showcase'];
+const SHOWCASE_ROUTES = ['showcase', 'showcase-deep-dive'];
 
 const isMeetingStatusActive = computed(() => MEETING_STATUS_ROUTES.includes(route.name));
 const isMembersActive = computed(() => MEMBERS_ROUTES.includes(route.name));

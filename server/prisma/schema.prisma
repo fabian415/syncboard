@@ -106,3 +106,33 @@ model CombinedReport {
 
   @@unique([projectId, reportDate])
 }
+
+enum DeepDiveAssetType {
+  HTML
+  IMAGE
+  PPTX
+}
+
+enum DeepDiveAssetStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model DeepDiveAsset {
+  id           String              @id @default(uuid())
+  meetingDate  DateTime            @db.Date
+  assetType    DeepDiveAssetType
+  status       DeepDiveAssetStatus @default(UPLOADING)
+  originalName String
+  filePath     String
+  mimeType     String?
+  sizeBytes    Int?
+  slideCount   Int?
+  errorMessage String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([meetingDate, assetType])
+}
