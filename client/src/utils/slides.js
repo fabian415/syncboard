@@ -149,7 +149,7 @@ export function autoPaginateHtml(html, { width, height } = {}) {
       }
 
       const listInfo = findListBlock(section.blocks);
-      if (!listInfo) {
+      if (!listInfo || listInfo.list.children.length === 0) {
         // Nothing left to split on — place as-is and let it scroll within the slide.
         pageNodes = [...pageNodes, ...candidateNodes.map((n) => n.cloneNode(true))];
         setMeasurerContent(pageNodes);
@@ -157,6 +157,15 @@ export function autoPaginateHtml(html, { width, height } = {}) {
       }
 
       const { list, wrapper } = listInfo;
+      // Splitting rebuilds the section from heading + list chunks, so every
+      // sibling block around the list (most visibly the
+      // <div class="image-row"> of screenshots the prompts emit *after* the
+      // </ul>) has to be carried onto the split pages explicitly — otherwise
+      // it's silently dropped, and the images vanish from the deck at exactly
+      // the window sizes where a section grows big enough to need splitting.
+      const listBlockIndex = section.blocks.indexOf(wrapper || list);
+      const leadingBlocks = listBlockIndex > 0 ? section.blocks.slice(0, listBlockIndex) : [];
+      const trailingBlocks = listBlockIndex === -1 ? [] : section.blocks.slice(listBlockIndex + 1);
       const items = Array.from(list.children);
       let firstChunk = true;
       let i = 0;
@@ -171,7 +180,12 @@ export function autoPaginateHtml(html, { width, height } = {}) {
         const containerNode = wrapper ? wrapper.cloneNode(false) : listClone;
         if (wrapper) containerNode.appendChild(listClone);
 
-        const baseNodes = [...pageNodes, ...(headingClone ? [headingClone] : [])];
+        const baseNodes = [
+          ...pageNodes,
+          ...(headingClone ? [headingClone] : []),
+          // Anything before the list belongs above the first chunk only.
+          ...(firstChunk ? leadingBlocks.map((n) => n.cloneNode(true)) : []),
+        ];
         let addedAny = false;
         while (i < items.length) {
           const candidateLi = items[i].cloneNode(true);
@@ -188,6 +202,25 @@ export function autoPaginateHtml(html, { width, height } = {}) {
 
         pageNodes = [...baseNodes, containerNode];
         firstChunk = false;
+      }
+
+      // Blocks after the list (the image-row) stay with the section's last
+      // chunk when they still fit, and otherwise get a continuation page of
+      // their own rather than being dropped.
+      if (trailingBlocks.length) {
+        const trial = [...pageNodes, ...trailingBlocks.map((n) => n.cloneNode(true))];
+        setMeasurerContent(trial);
+        if (fits()) {
+          pageNodes = trial;
+        } else {
+          startNewPage(true);
+          pageNodes = [
+            ...pageNodes,
+            ...(section.heading ? [cloneWithContinuedSuffix(section.heading)] : []),
+            ...trailingBlocks.map((n) => n.cloneNode(true)),
+          ];
+          setMeasurerContent(pageNodes);
+        }
       }
     }
 

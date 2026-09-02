@@ -40,7 +40,16 @@ const NAV_KEYS = new Set(['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Pa
 // there instead and the deck's own listener handles it natively — this
 // forwarding just stays quiet in that case.
 function forwardKeyToDeck(e) {
-  if (!props.asset || !NAV_KEYS.has(e.key)) return;
+  if (!props.asset) return;
+  // With the title bar gone, Esc is the main way out. Native fullscreen
+  // already handles it at the UA level (see handleFullscreenChange); this
+  // only covers the case where the fullscreen request was denied and the
+  // overlay is just a fixed-position layer.
+  if (e.key === 'Escape') {
+    if (!document.fullscreenElement) close();
+    return;
+  }
+  if (!NAV_KEYS.has(e.key)) return;
   // Let a focused button (e.g. the close button below) keep its native
   // Space/Enter activation instead of hijacking it as a slide-nav key.
   if (e.target?.closest?.('button')) return;
@@ -88,20 +97,32 @@ function close() {
 </script>
 
 <template>
-  <div v-if="asset" ref="rootRef" class="fixed inset-0 z-50 flex flex-col bg-black/80">
-    <div class="flex items-center justify-between px-6 py-2 bg-gray-900 text-white shrink-0">
-      <span class="text-sm font-medium truncate">{{ asset.originalName }}</span>
-      <button class="p-1.5 rounded-full hover:bg-white/10" title="關閉(或按 Esc)" @click="close">
-        <X class="w-5 h-5" />
+  <div v-if="asset" ref="rootRef" class="fixed inset-0 z-50 bg-black">
+    <iframe
+      ref="iframeRef"
+      :src="asset.url"
+      sandbox="allow-scripts"
+      class="absolute inset-0 w-full h-full bg-white border-0"
+    ></iframe>
+
+    <!--
+      Chromeless playback: an uploaded deck lays out against the full
+      viewport (its own top nav sits right at the top edge), so a title bar
+      of ours would both steal a slice of that layout and read as a second,
+      competing header. The deck gets the whole screen instead, and the only
+      app chrome left is this corner control — collapsed to a single dim
+      button so it overlaps as little of the deck as possible, expanding to
+      show the file name on hover. Esc still closes from anywhere.
+    -->
+    <div
+      class="group absolute top-2 right-2 z-10 flex items-center rounded-full bg-gray-900/60 text-white opacity-35 transition-opacity duration-200 hover:bg-gray-900/90 hover:opacity-100"
+    >
+      <span
+        class="max-w-0 overflow-hidden whitespace-nowrap text-xs font-medium transition-all duration-200 group-hover:max-w-[280px] group-hover:pl-4"
+      >{{ asset.originalName }}</span>
+      <button class="p-2 rounded-full hover:bg-white/15" title="關閉(或按 Esc)" @click="close">
+        <X class="w-4 h-4" />
       </button>
-    </div>
-    <div class="flex-1 relative min-h-0">
-      <iframe
-        ref="iframeRef"
-        :src="asset.url"
-        sandbox="allow-scripts"
-        class="w-full h-full bg-white border-0"
-      ></iframe>
     </div>
   </div>
 </template>
