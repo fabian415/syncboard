@@ -10,6 +10,7 @@ export function buildFollowUpTemplate() {
       * [子項目，無則可刪除]
     * ![圖片標題1](https://picsum.photos/600/400?random=1)
     * ![圖片標題2](https://picsum.photos/600/400?random=2)
+    * !video[影片標題](上傳到 Deep Dive 後複製的影片連結，無則可刪除)
 
 * 項目 2｜**[事項名稱]**
   * Owner：[姓名]｜狀態：✅ Done
@@ -37,6 +38,7 @@ export function buildProjectSectionTemplate({ projectName }) {
 
 ![圖片標題1](https://picsum.photos/600/400?random=1)
 ![圖片標題2](https://picsum.photos/600/400?random=2)
+!video[影片標題](上傳到 Deep Dive 後複製的影片連結，無則可刪除)
 
 ---
 * **⚠️ 風險與阻礙**：無
@@ -51,6 +53,13 @@ export function buildProjectSectionTemplate({ projectName }) {
 | \`⏳ [WIP]\` | 正常進行中 | 預設灰色 / 藍色標籤 |
 | \`🚫 [BLOCKED]\` | 卡關 / 需跨團隊協助 | 紅色警示邊框 / 紅色 Card |
 | \`✅ [DONE]\` | 之前就已完成（背景資訊） | 灰綠色低調標籤 |
+
+| 附件語法 | 語法範例 | 簡報中的呈現 |
+| ------- | ------- | ----------- |
+| 圖片 | \`![圖片標題](圖片網址)\` | 內嵌顯示，點擊放大 |
+| 影片 | \`!video[影片標題](影片網址)\` | 內嵌播放器，可點全螢幕 |
+
+圖片與影片請先到「整體進度上傳 → Deep Dive」上傳，再用卡片上的「複製連結」／「複製 Markdown 語法」取得網址；語法要獨立成一行。
 -->
 `;
 }

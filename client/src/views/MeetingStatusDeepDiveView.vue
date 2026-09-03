@@ -7,6 +7,7 @@ import {
   UploadCloud,
   FileCode,
   Image as ImageIcon,
+  Film,
   Presentation,
   Pause,
   Play,
@@ -16,6 +17,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Link2,
+  Code2,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -36,6 +38,7 @@ const isInitialLoading = ref(true);
 const isDragging = ref(false);
 const fileInput = ref(null);
 const copiedAssetId = ref(null);
+const copiedMarkdownAssetId = ref(null);
 const lightboxIndex = ref(null);
 const lightboxRootRef = ref(null);
 const currentLightboxAsset = computed(() =>
@@ -50,11 +53,16 @@ const EXT_TO_TYPE = {
   jpeg: 'IMAGE',
   gif: 'IMAGE',
   webp: 'IMAGE',
+  mp4: 'VIDEO',
+  webm: 'VIDEO',
+  m4v: 'VIDEO',
+  mov: 'VIDEO',
   pptx: 'PPTX',
 };
 const TYPE_META = {
   HTML: { label: 'HTML', icon: FileCode },
   IMAGE: { label: '圖片', icon: ImageIcon },
+  VIDEO: { label: '影片', icon: Film },
   PPTX: { label: 'PPTX', icon: Presentation },
 };
 
@@ -103,7 +111,7 @@ function addFiles(files) {
       assetType,
       progress: 0,
       status: assetType ? 'uploading' : 'error',
-      errorMessage: assetType ? '' : '不支援的檔案類型（僅支援 HTML／圖片／PPTX）',
+      errorMessage: assetType ? '' : '不支援的檔案類型（僅支援 HTML／圖片／影片／PPTX）',
       tusUpload: null,
     });
     uploads.push(entry);
@@ -252,6 +260,18 @@ async function copyLink(asset) {
   }, 1500);
 }
 
+// The report Markdown's own video syntax (see personalReportTemplate.js and
+// the AI layout prompts) — copied ready to paste into a report so the
+// presenter never has to hand-assemble it around the raw link.
+async function copyVideoMarkdown(asset) {
+  const title = asset.originalName.replace(/\.[^.]+$/, '') || '影片';
+  await copyToClipboard(`!video[${title}](${absoluteUrl(asset)})`);
+  copiedMarkdownAssetId.value = asset.id;
+  setTimeout(() => {
+    if (copiedMarkdownAssetId.value === asset.id) copiedMarkdownAssetId.value = null;
+  }, 1500);
+}
+
 function formatSize(bytes) {
   if (!bytes) return '';
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -275,7 +295,9 @@ function goBack() {
         返回整體進度
       </button>
       <h1 class="text-lg font-bold text-gray-900">Deep Dive & 技術分享｜{{ date }}</h1>
-      <p class="mt-1 text-sm text-gray-500">上傳 HTML、圖片、PPTX 檔案，稍後可在成果展示中瀏覽與播放。</p>
+      <p class="mt-1 text-sm text-gray-500">
+        上傳 HTML、圖片、影片、PPTX 檔案，稍後可在成果展示中瀏覽與播放；圖片與影片也可複製連結貼進雙週報。
+      </p>
     </div>
 
     <p v-if="deepDive.error" class="text-sm text-red-600">{{ deepDive.error }}</p>
@@ -290,7 +312,10 @@ function goBack() {
     >
       <UploadCloud class="w-8 h-8 mx-auto text-gray-400 mb-2" />
       <p class="text-sm text-gray-600">拖拉檔案到這裡，或點擊選擇檔案</p>
-      <p class="mt-1 text-xs text-gray-400">支援 .html / .png .jpg .gif .webp / .pptx，支援大檔案續傳</p>
+      <p class="mt-1 text-xs text-gray-400">
+        支援 .html / .png .jpg .gif .webp / .mp4 .webm .m4v .mov / .pptx，支援大檔案續傳
+      </p>
+      <p class="mt-0.5 text-xs text-gray-400">影片建議用 mp4 (H.264) 或 webm，瀏覽器相容性最好</p>
       <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileInputChange" />
     </div>
 
@@ -332,7 +357,7 @@ function goBack() {
       </div>
     </div>
 
-    <div v-for="type in ['HTML', 'IMAGE', 'PPTX']" :key="type">
+    <div v-for="type in ['HTML', 'IMAGE', 'VIDEO', 'PPTX']" :key="type">
       <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center">
         <component :is="TYPE_META[type].icon" class="w-4 h-4 mr-1.5 text-gray-400" />
         {{ TYPE_META[type].label }}
@@ -350,6 +375,56 @@ function goBack() {
           </button>
           <div class="p-2 flex items-center gap-1">
             <span class="text-xs text-gray-600 truncate flex-1">{{ asset.originalName }}</span>
+            <button
+              type="button"
+              class="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+              title="複製連結"
+              @click="copyLink(asset)"
+            >
+              <Check v-if="copiedAssetId === asset.id" class="w-3.5 h-3.5 text-green-600" />
+              <Link2 v-else class="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              class="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 shrink-0"
+              title="刪除"
+              @click="removeAsset(asset)"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Videos are served straight off the static mount (Range-capable), so a
+           real <video> element doubles as the thumbnail and the preview player. -->
+      <div v-else-if="type === 'VIDEO'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+        <div
+          v-for="asset in deepDive.byType('VIDEO')"
+          :key="asset.id"
+          class="bg-white rounded-xl border border-gray-200 overflow-hidden"
+        >
+          <video
+            :src="asset.url"
+            controls
+            preload="metadata"
+            playsinline
+            class="block w-full aspect-video bg-black"
+          ></video>
+          <div class="p-2 flex items-center gap-1">
+            <div class="min-w-0 flex-1">
+              <p class="text-xs text-gray-600 truncate">{{ asset.originalName }}</p>
+              <p class="text-[11px] text-gray-400">{{ formatSize(asset.sizeBytes) }}</p>
+            </div>
+            <button
+              type="button"
+              class="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+              title="複製 Markdown 語法（貼進報告即可）"
+              @click="copyVideoMarkdown(asset)"
+            >
+              <Check v-if="copiedMarkdownAssetId === asset.id" class="w-3.5 h-3.5 text-green-600" />
+              <Code2 v-else class="w-3.5 h-3.5" />
+            </button>
             <button
               type="button"
               class="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"

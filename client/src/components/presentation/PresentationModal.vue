@@ -82,6 +82,15 @@ let lastPaginateSize = null;
 function runAutoPaginate() {
   const stage = stageRef.value;
   if (!stage) return;
+  // Never re-paginate while something on the slide is in native fullscreen.
+  // Entering fullscreen on an embedded <video> hides the browser chrome, which
+  // fires a window 'resize' — and re-pagination replaces presentation.decks
+  // with fresh page strings, so v-html rebuilds the slide and the fullscreen
+  // <video> is removed from the document. Per the Fullscreen spec, removing
+  // the fullscreen element exits fullscreen, so the video would snap straight
+  // back out (~150ms after opening) and lose its playback position. The
+  // deferred pass in handleFullscreenChange picks the layout back up on exit.
+  if (document.fullscreenElement) return;
   const width = stage.clientWidth;
   const height = stage.clientHeight;
   if (lastPaginateSize && lastPaginateSize.width === width && lastPaginateSize.height === height) return;
@@ -96,6 +105,13 @@ let resizeTimer = null;
 function handleResize() {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(runAutoPaginate, 150);
+}
+
+// Leaving fullscreen restores the original viewport size, so run the layout
+// pass that was skipped above. lastPaginateSize means this is a no-op unless
+// the stage really did change size while fullscreen was open.
+function handleFullscreenChange() {
+  if (!document.fullscreenElement) handleResize();
 }
 
 function handleEdit() {
@@ -127,6 +143,7 @@ watch(
     if (!isOpen) {
       paginated.value = false;
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
       return;
     }
     currentPage.value = 0;
@@ -141,6 +158,7 @@ watch(
     }
     paginated.value = true;
     window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
   },
 );
 
@@ -223,6 +241,10 @@ function lightboxNext() {
 
 function handleKeydown(e) {
   if (!presentation.isOpen) return;
+  // While a slide's <video> is in native fullscreen the UA owns the keyboard:
+  // Esc means "leave fullscreen" (not "close the deck"), and arrow keys must
+  // not flip the page out from under the element that's currently fullscreen.
+  if (document.fullscreenElement) return;
   if (e.key === 'Escape') {
     if (lightboxSrc.value) closeLightbox();
     else presentation.close();
@@ -238,6 +260,9 @@ function handleKeydown(e) {
 }
 
 function handleSlideClick(e) {
+  // Clicks on a player's own controls (play, seek, fullscreen) belong to the
+  // <video>; don't let the lightbox/link handling below preventDefault them.
+  if (e.target.closest('video')) return;
   const link = e.target.closest('a[href]');
   if (link) {
     e.preventDefault();
@@ -266,6 +291,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
   window.removeEventListener('resize', handleResize);
+  document.removeEventListener('fullscreenchange', handleFullscreenChange);
   clearTimeout(resizeTimer);
   clearTimeout(recentlyChangedTimer);
   document.body.style.overflow = 'auto';

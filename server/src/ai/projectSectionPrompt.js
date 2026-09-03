@@ -1,3 +1,5 @@
+import { VIDEO_TAG_WHITELIST, VIDEO_SYNTAX_RULE } from './mediaSyntax.js';
+
 const EXAMPLE_INPUT = `### 🌐 DeviceOn
 * **Owner**：Alex
 
@@ -65,11 +67,12 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 若輸出 2 頁，片段之間用一行 "<!-- SLIDE -->" 分隔。
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
-   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">。
+   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">, ${VIDEO_TAG_WHITELIST}。
 4. 內容要忠於原文、精煉但不省略任何一個子項目，只做語句層級的潤飾（去除贅字、修順語氣），不能新增原文沒有的內容或數字。
 5. 若 Owner、Product 名稱或子項目名稱前後殘留範本用的方括號（例如 Owner：[姓名]，代表使用者忘記刪除範本標記），輸出時去掉這對方括號、只保留裡面的文字。
 6. 「本週進度」條列項目底下若有更深一層縮排的子項目（純文字，沒有狀態標籤），輸出時要包成巢狀的 <ul><li>...</li></ul>，放在該狀態項目的 <li> 內部；子項目內容忠於原文，只做語句層級的微幅潤飾，不能省略。
 7. 原文中若有獨立成行的圖片語法 \`![替代文字](網址)\`（該行本身只有圖片語法），要轉換成 <img src="網址" alt="替代文字">，放在其所屬 📦 子項目「本週進度」清單之後、下一個 📦 子項目（或結尾的「⚠️ 風險與阻礙」「💡 需要的決策或協助」）之前。若同一位置有 2 張以上連續的圖片，要包在同一個 <div class="image-row"> 裡讓它們並排顯示；只有 1 張時直接輸出 <img>，不需要用 <div class="image-row"> 包裹。不能省略任何一張圖片。
+8. ${VIDEO_SYNTAX_RULE}
 
 以下是一組範例：
 

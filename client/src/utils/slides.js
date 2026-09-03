@@ -1,8 +1,9 @@
 const SLIDE_DELIMITER = /<!--\s*SLIDE\s*-->/i;
 // A slide only counts as having real content if it has at least one list
 // item or content block beyond its heading(s) — a page that's just an
-// <h1>/<h2> with nothing under it is empty and shouldn't be shown.
-const CONTENT_RE = /<li[\s>]|<div[\s>]/i;
+// <h1>/<h2> with nothing under it is empty and shouldn't be shown. A lone
+// <video> counts too: a demo-clip-only page is a legitimate slide.
+const CONTENT_RE = /<li[\s>]|<div[\s>]|<video[\s>]/i;
 
 export function parseSlides(content) {
   if (!content || !content.trim()) return [];
@@ -66,6 +67,32 @@ function groupIntoSections(bodyNodes) {
   return sections;
 }
 
+// Sections that only make sense next to the one above them. 「補充說明
+// (Why)」 is the rationale for the 「核心重點 (Key Highlights)」 bullets and
+// the screenshots that go with them, so an <h2> page break between the two
+// strands the Why on a page of its own with nothing to explain — the exact
+// symptom this guards against. Matched on the heading text, since the
+// prompts number the headings ("2. 補充說明 (Why)").
+const STICKY_HEADING_RE = /補充說明|[(（]\s*why\s*[)）]/i;
+
+// Folds every sticky section into the section it belongs to, producing one
+// indivisible unit (heading + list + images/video + Why card). `atomic`
+// marks those merged units so pagination keeps them whole on one page —
+// letting an oversized one scroll — instead of splitting them.
+function mergeStickySections(sections) {
+  const merged = [];
+  for (const section of sections) {
+    const prev = merged[merged.length - 1];
+    if (prev && section.heading && STICKY_HEADING_RE.test(section.heading.textContent || '')) {
+      prev.blocks.push(section.heading, ...section.blocks);
+      prev.atomic = true;
+      continue;
+    }
+    merged.push(section);
+  }
+  return merged;
+}
+
 // Finds the <ul>/<ol> that carries a section's bulk content, so an
 // oversized section can be split item-by-item instead of all-or-nothing.
 // Returns the wrapping element too (e.g. <div class="card">) if the list
@@ -115,7 +142,7 @@ export function autoPaginateHtml(html, { width, height } = {}) {
     if (nodes.length === 0) return [html];
 
     const titleNode = nodes[0].tagName === 'H1' ? nodes[0] : null;
-    const sections = groupIntoSections(titleNode ? nodes.slice(1) : nodes);
+    const sections = mergeStickySections(groupIntoSections(titleNode ? nodes.slice(1) : nodes));
 
     const pages = [];
     let pageNodes = [];
@@ -146,6 +173,15 @@ export function autoPaginateHtml(html, { width, height } = {}) {
           pageNodes = freshTrial;
           continue;
         }
+      }
+
+      // 核心重點 + 圖片 + 補充說明 is one indivisible unit. It has a page to
+      // itself by this point and still doesn't fit, so keep it whole at full
+      // size and let the slide scroll — never split it across pages.
+      if (section.atomic) {
+        pageNodes = [...pageNodes, ...candidateNodes.map((n) => n.cloneNode(true))];
+        setMeasurerContent(pageNodes);
+        continue;
       }
 
       const listInfo = findListBlock(section.blocks);

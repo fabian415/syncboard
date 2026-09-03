@@ -110,6 +110,7 @@ model CombinedReport {
 enum DeepDiveAssetType {
   HTML
   IMAGE
+  VIDEO
   PPTX
 }
 

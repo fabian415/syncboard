@@ -1,3 +1,5 @@
+import { VIDEO_TAG_WHITELIST, VIDEO_SYNTAX_RULE } from './mediaSyntax.js';
+
 const EXAMPLE_INPUT = `## 1. Follow-up
 
 * 項目 1｜**JDK 17 升級**
@@ -108,9 +110,10 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 若輸出多頁，片段之間用一行 "<!-- SLIDE -->" 分隔。
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
-   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">, <span class="badge badge-neutral">。
+   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, <span class="badge badge-new-done">, <span class="badge badge-done">, <span class="badge badge-updated">, <span class="badge badge-new">, <span class="badge badge-wip">, <span class="badge badge-blocked">, <span class="badge badge-neutral">, ${VIDEO_TAG_WHITELIST}。
 4. 內容要忠於原文、精煉但不省略任何一個追蹤項目，只做語句層級的潤飾，不能新增原文沒有的內容或數字。
 5. 若事項名稱或 Owner 前後殘留範本用的方括號（例如 **[事項名稱]**、Owner：[姓名]，代表使用者忘記刪除範本標記），輸出時去掉這對方括號、只保留裡面的文字。
+6. ${VIDEO_SYNTAX_RULE}影片與圖片一樣，**絕對不能**輸出成 <li> 或放進任何 <ul>／<li> 裡面，要放在該追蹤項目的 <h2>...</h2><ul>...</ul> 結構之後。
 
 以下是一組範例：
 

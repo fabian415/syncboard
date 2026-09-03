@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft, FileCode, Presentation, Loader2, AlertCircle } from 'lucide-vue-next';
+import { ArrowLeft, FileCode, Film, Presentation, Loader2, AlertCircle } from 'lucide-vue-next';
 import { useDeepDiveStore } from '../stores/deepDive.js';
 import { usePresentationStore } from '../stores/presentation.js';
 import { todayISO } from '../utils/date.js';
@@ -81,6 +81,28 @@ function goBack() {
             <FileCode class="w-5 h-5 text-blue-500 shrink-0" />
             <span class="text-sm text-gray-800 truncate flex-1">{{ asset.originalName }}</span>
           </button>
+        </div>
+      </div>
+
+      <div v-if="deepDive.byType('VIDEO').length > 0">
+        <h3 class="text-sm font-bold text-gray-700 mb-2 flex items-center">
+          <Film class="w-4 h-4 mr-1.5 text-gray-400" />影片
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            v-for="asset in deepDive.byType('VIDEO')"
+            :key="asset.id"
+            class="bg-white rounded-xl border border-gray-200 overflow-hidden"
+          >
+            <video
+              :src="asset.url"
+              controls
+              preload="metadata"
+              playsinline
+              class="block w-full aspect-video bg-black"
+            ></video>
+            <p class="p-2 text-xs text-gray-600 truncate">{{ asset.originalName }}</p>
+          </div>
         </div>
       </div>
 

@@ -13,13 +13,19 @@ import {
 } from '../../storage/fsStore.js';
 import { convertPptxToSlides } from '../../deepDive/pptxConverter.js';
 
-const ASSET_TYPES = ['HTML', 'IMAGE', 'PPTX'];
+const ASSET_TYPES = ['HTML', 'IMAGE', 'VIDEO', 'PPTX'];
 // SVG is deliberately excluded from IMAGE: it can embed <script>/event
 // handlers and would be a stored-XSS vector once served as a direct,
 // unauthenticated static link.
+//
+// VIDEO files are stored and served as-is (no transcoding) — express.static
+// answers Range requests, so seeking works straight off the stored file.
+// Whether a given .mov/.m4v actually plays is down to its codec: only
+// H.264/AAC (and webm/VP9) are safe across browsers, which the upload UI says.
 const EXTENSIONS_BY_TYPE = {
   HTML: ['html', 'htm'],
   IMAGE: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
+  VIDEO: ['mp4', 'webm', 'm4v', 'mov'],
   PPTX: ['pptx'],
 };
 

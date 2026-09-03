@@ -8,6 +8,7 @@ export function buildProductBlock(projectName) {
 ![圖片標題1](https://picsum.photos/600/400?random=1)
 ![圖片標題2](https://picsum.photos/600/400?random=2)
 ![圖片標題3](https://picsum.photos/600/400?random=3)
+!video[影片標題](請先到「整體進度上傳 → Deep Dive」上傳影片，再複製連結貼到這裡)
 
 ### - 項目的補充說明 (ex, 為什麼需要做, Optional)
 <div class="card">
@@ -35,6 +36,11 @@ export function buildProductBlock(projectName) {
 | 連結模板 | 語法範例 | 簡報中的開啟方式 |
 | ------- | ------- | --------------- |
 | 一般連結 | \`[顯示文字](https://example.com)\` | 另開新分頁 |
+| 圖片 | \`![圖片標題](圖片網址)\` | 內嵌顯示，點擊放大 |
+| 影片 | \`!video[影片標題](影片網址)\` | 內嵌播放器，可點全螢幕 |
+
+圖片與影片請先到「整體進度上傳 → Deep Dive」上傳，再用卡片上的「複製連結」／「複製 Markdown 語法」按鈕取得網址。
+圖片與影片語法都要「獨立成一行」，不要接在條列文字後面。
 -->`;
 }
 

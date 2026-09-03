@@ -1,3 +1,5 @@
+import { VIDEO_TAG_WHITELIST, VIDEO_SYNTAX_RULE } from './mediaSyntax.js';
+
 const EXAMPLE_INPUT = `### - 核心重點 (Key Highlights)
 * **1. [功能/模組]**：完成支付 API 重構，降低 30% 延遲
   * **1.1. [子項目]**：延遲下降主要來自 cache 命中率提升與 DB connection pool 調優
@@ -8,6 +10,7 @@ const EXAMPLE_INPUT = `### - 核心重點 (Key Highlights)
 
 ![壓測前後延遲比較](https://example.com/img-before-after.png)
 ![新版部署架構圖](https://example.com/img-architecture.png)
+!video[結帳流程 Demo](https://example.com/checkout-demo.mp4)
 
 ### - 項目的補充說明 (ex, 為什麼需要做)
 <div class="card">
@@ -53,6 +56,9 @@ const EXAMPLE_OUTPUT = `<h1>🚀 TungYi｜DeviceOn</h1>
   <img src="https://example.com/img-before-after.png" alt="壓測前後延遲比較">
   <img src="https://example.com/img-architecture.png" alt="新版部署架構圖">
 </div>
+<div class="video-block">
+  <video src="https://example.com/checkout-demo.mp4" controls preload="metadata" playsinline title="結帳流程 Demo"></video>
+</div>
 <h2>2. 補充說明 (Why)</h2>
 <div class="card">
   <ul>
@@ -97,12 +103,13 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎。你會收�
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 輸出恰好 2 個投影片片段，片段之間用一行 "<!-- SLIDE -->" 分隔。第一頁＝核心重點（最多 5 條）+ 補充說明（若補充說明為空則第一頁只有核心重點；最多 2 條）。第二頁＝下週計畫 + 討論/阻礙（若有）+ 相關連結（若有），此頁維持忠於原文、不省略任何一條。若某個選填子區塊原文是空的、寫「無」、「無明顯阻礙」、「none」或其他明確表示「沒有這類事項」的文字，就完全省略該區塊，不要生成空的或只寫「無」的 <div>。
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
-   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">。
+   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, ${VIDEO_TAG_WHITELIST}。
 4. 原文中任何地方出現的 Markdown 連結 \`[顯示文字](網址)\`（不限於「相關連結」區塊，核心重點、補充說明、下週計畫、討論/阻礙裡出現的也一樣），都必須轉換成 \`<a href="網址">顯示文字</a>\` 輸出；絕對不能把 \`[顯示文字](網址)\` 這種方括號＋括號的原始寫法直接留在輸出的 HTML 文字裡。
 5. 第一頁 <h1> 用 "🚀 {成員姓名}｜{Product 名稱}"，第二頁 <h1> 用 "📋 {成員姓名} 下週計畫與討論"。
 6. 每個區塊的 <h2> 前面都要加上編號（例如 "1. 核心重點 (Key Highlights)"），編號依固定順序「核心重點 → 補充說明 → 下週計畫 → 討論/阻礙 → 相關連結」**跨兩頁投影片連續編號**（第一頁最後編到幾號，第二頁第一個 <h2> 就接續下一號，不重新從 1 開始）。若某個選填區塊被省略，後面區塊的編號要依序遞補、不可留空號或跳號。
 7. 原文的項目符號若有縮排（例如以兩個空白開頭的 \`* 文字\`），代表它是上一個較淺縮排項目的子項目：輸出時要把這些子項目包成巢狀的 <ul><li>...</li></ul>，放在父層 <li> 內部（即 <li>父項目文字<ul><li>子項目 1</li><li>子項目 2</li></ul></li>）；子項目內容一樣忠於原文、只做語句層級的微幅潤飾，不能省略或另外新增。計算「核心重點最多 5 條」時只計算最外層（無縮排）的項目數，子項目不單獨計入上限、永遠跟著所屬的父項目一起保留或一起被捨棄。
 8. 原文中若有獨立成行的圖片語法 \`![替代文字](網址)\`（該行本身只有圖片語法，不是某個項目文字的一部分），要轉換成 <img src="網址" alt="替代文字">，並放在該圖片在原文中所屬的區塊裡（緊接在該區塊其餘內容之後）。若同一區塊裡有 2 張以上連續的圖片，要包在同一個 <div class="image-row"> 裡讓它們並排顯示，例如 <div class="image-row"><img src="..." alt="..."><img src="..." alt="..."></div>；只有 1 張時直接輸出 <img>，不需要用 <div class="image-row"> 包裹。不能省略任何一張圖片，也不能新增原文沒有的圖片。
+9. ${VIDEO_SYNTAX_RULE}
 
 以下是一組範例：
 

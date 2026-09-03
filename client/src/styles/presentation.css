@@ -449,6 +449,32 @@
   object-fit: cover;
 }
 
+/* Embedded video (`!video[標題](網址)` in the source markdown). The explicit
+   aspect-ratio is load-bearing, not decoration: autoPaginateHtml measures a
+   slide's height off this same CSS, and without it a <video> whose metadata
+   hasn't arrived yet measures at the UA default 300x150 and the page would
+   re-flow (and mis-paginate) the moment the metadata lands. */
+.presentation-slide .video-block {
+  width: 100%;
+  max-width: 640px;
+  margin: 12px auto;
+}
+.presentation-slide .video-block video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+}
+/* In native fullscreen the UA sizes the element to the screen — drop our own
+   rounding/letterbox so it fills edge to edge. */
+.presentation-slide .video-block video:fullscreen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border-radius: 0;
+}
+
 .presentation-slide .card {
   background: var(--p-info-bg);
   border-left: 4px solid var(--p-info);
