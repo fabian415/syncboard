@@ -67,6 +67,10 @@ function groupIntoSections(bodyNodes) {
   return sections;
 }
 
+// Matches the standalone 「Owner：xxx」 heading the prompts emit once per page
+// (see server/src/ai/*Prompt.js); PresentationModal pulls it into the topbar.
+const OWNER_HEADING_RE = /^\s*Owner\s*[：:]/i;
+
 // Sections that only make sense next to the one above them. 「補充說明
 // (Why)」 is the rationale for the 「核心重點 (Key Highlights)」 bullets and
 // the screenshots that go with them, so an <h2> page break between the two
@@ -142,14 +146,28 @@ export function autoPaginateHtml(html, { width, height } = {}) {
     if (nodes.length === 0) return [html];
 
     const titleNode = nodes[0].tagName === 'H1' ? nodes[0] : null;
-    const sections = mergeStickySections(groupIntoSections(titleNode ? nodes.slice(1) : nodes));
+    const rest = titleNode ? nodes.slice(1) : nodes;
+    // The single leading Owner heading is page furniture, not a section:
+    // PresentationModal hoists it into the topbar badge and .presentation-slide
+    // hides <h1> entirely, so a page holding nothing but those two renders
+    // completely blank — which is exactly what a heading-only Owner "section"
+    // produced when the first real section didn't fit beside it. Treat it as
+    // part of the page header instead, repeated on every page (the same thing
+    // the prompts do for their own page 2) so the Owner badge also survives
+    // onto continuation pages.
+    const ownerNode = rest[0]?.tagName === 'H2' && OWNER_HEADING_RE.test(rest[0].textContent || '') ? rest[0] : null;
+    const headerNodes = [titleNode, ownerNode].filter(Boolean);
+    const sections = mergeStickySections(groupIntoSections(ownerNode ? rest.slice(1) : rest));
 
     const pages = [];
     let pageNodes = [];
 
     const startNewPage = (isContinuation) => {
-      if (pageNodes.length) pages.push(pageNodes.map((n) => n.outerHTML).join(''));
-      pageNodes = titleNode ? [isContinuation ? cloneWithContinuedSuffix(titleNode) : titleNode.cloneNode(true)] : [];
+      // A header-only page has nothing visible on it — never flush one.
+      if (pageNodes.length > headerNodes.length) pages.push(pageNodes.map((n) => n.outerHTML).join(''));
+      pageNodes = headerNodes.map((n) =>
+        isContinuation && n === titleNode ? cloneWithContinuedSuffix(n) : n.cloneNode(true),
+      );
       setMeasurerContent(pageNodes);
     };
 
@@ -164,7 +182,7 @@ export function autoPaginateHtml(html, { width, height } = {}) {
         continue;
       }
 
-      const hasOtherContent = pageNodes.length > (titleNode ? 1 : 0);
+      const hasOtherContent = pageNodes.length > headerNodes.length;
       if (hasOtherContent) {
         startNewPage(true);
         const freshTrial = [...pageNodes, ...candidateNodes.map((n) => n.cloneNode(true))];
@@ -260,7 +278,7 @@ export function autoPaginateHtml(html, { width, height } = {}) {
       }
     }
 
-    if (pageNodes.length) pages.push(pageNodes.map((n) => n.outerHTML).join(''));
+    if (pageNodes.length > headerNodes.length) pages.push(pageNodes.map((n) => n.outerHTML).join(''));
     return pages.length > 0 ? pages : [html];
   } finally {
     document.body.removeChild(measurer);

@@ -177,7 +177,10 @@ function pickVariationSeed() {
 
 function isValidSampleBlock(block) {
   if (!block.startsWith('## 📦 Product：')) return false;
-  const highlightCount = (block.match(/^\*\s+\*\*\d+\./gm) || []).length;
+  // A highlight line is "* **1. ...", optionally preceded by the status tag
+  // the generator now emits ("* 🎉 [NEW DONE] **1. ..."), so the count has to
+  // tolerate anything sitting between the bullet and the number.
+  const highlightCount = (block.match(/^\*\s+.*?\*\*\d+\./gm) || []).length;
   if (highlightCount < MIN_SAMPLE_HIGHLIGHTS) return false;
   return REQUIRED_BLOCK_HEADINGS.every((heading) => block.includes(heading));
 }

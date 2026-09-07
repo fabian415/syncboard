@@ -390,6 +390,25 @@
   position: absolute;
   left: 0;
 }
+/* A nested <ul> otherwise inherits padding-left:0 and its <li> the -10px
+   pull, so a sub-item lands ~10px from its parent wearing the identical
+   bullet — the hierarchy was only legible because the templates asked
+   authors to hand-number the lines ("1." / "1.1"). Now that the numbering
+   is gone, the indent and a hollow, de-emphasized marker have to carry it. */
+.presentation-slide li ul,
+.presentation-slide li ol {
+  padding-left: 1.4em;
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+.presentation-slide li li {
+  font-size: 1rem;
+  color: var(--p-muted);
+}
+.presentation-slide li li::before {
+  content: '◦';
+  color: var(--p-muted);
+}
 .presentation-slide strong {
   color: var(--p-text);
   font-weight: 600;
@@ -435,11 +454,17 @@
   gap: 20px;
 }
 
-/* Consecutive images from the source markdown (e.g. attached screenshots)
-   are grouped into one row instead of stacking full-width. */
+/* Images from the source markdown (e.g. attached screenshots) are always
+   wrapped in one of these rows — a lone image included — so every screenshot
+   gets the same third-of-a-row size instead of stacking full-width.
+   Centering matters when the row isn't full: 1 or 2 images would otherwise
+   sit hard left with a ragged third of empty slide beside them. Three images
+   fill the row exactly (3 × (33.333% - 8px) + 2 × 12px gap = 100%), so this
+   is a no-op there, and a wrapped final row of 1-2 gets centered too. */
 .presentation-slide .image-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin: 12px 0;
 }
