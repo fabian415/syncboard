@@ -79,3 +79,25 @@ npm run build -w client
 ```
 
 `server/src/app.js` 在 `NODE_ENV=production` 時會直接 serve `client/dist` 的靜態檔案（SPA fallback），可作為單一部署單位運行。
+
+### 用 Docker Compose 部署（另一台機器）
+
+`docker-compose.yml` 包含 `postgres`、`unoserver`、`backend` 三個 service，`backend` 的 image 會在 build 時打包當下的 `server/`、`client/dist`。部署／更新流程：
+
+```bash
+# 1. 先確保程式碼是最新的（含新的 migration 資料夾）
+git pull
+
+# 2. 重新 build 並啟動所有 service
+docker compose up -d --build
+```
+
+`backend` 容器啟動時會自動執行 `npx prisma migrate deploy`（見 `Dockerfile`），套用所有尚未套用的 migration，所以 schema 變更（例如新增欄位）不需要額外下指令。
+
+但 **`migrate deploy` 不會執行 seed**，如果變更同時包含 `server/prisma/seed.js`（例如新增專案），要手動補一次：
+
+```bash
+docker compose exec backend node prisma/seed.js
+```
+
+`seed.js` 都是用 `upsert`，可重複執行、不會影響既有的 report 資料。

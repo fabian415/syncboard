@@ -39,7 +39,7 @@ async function main() {
   await upsertProject({
     id: '00000000-0000-0000-0000-000000000006',
     name: 'Industrial Claw',
-    description: '工業級機械爪夾具研發',
+    description: '工業級運算叢集龍蝦研發平台',
     tag: 'R&D',
     order: 2,
   });
