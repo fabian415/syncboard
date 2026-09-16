@@ -120,7 +120,7 @@ export async function saveHeader(date, header) {
 
 export async function getOverview(date) {
   assertValidDate(date);
-  const projects = await prisma.project.findMany({ orderBy: { createdAt: 'asc' } });
+  const projects = await prisma.project.findMany({ orderBy: { order: 'asc' } });
   const keys = ['header', 'follow-up', ...projects.map((p) => projectSectionKey(p.id))];
   const rows = await prisma.meetingStatusSection.findMany({
     where: { meetingDate: new Date(date), sectionKey: { in: keys } },
@@ -163,7 +163,7 @@ export async function getOverview(date) {
 }
 
 async function composeMeetingMarkdown(date) {
-  const projects = await prisma.project.findMany({ orderBy: { createdAt: 'asc' } });
+  const projects = await prisma.project.findMany({ orderBy: { order: 'asc' } });
   const header = await getHeader(date);
   const followUp = await getSection(date, 'follow-up');
 

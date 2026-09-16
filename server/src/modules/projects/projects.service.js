@@ -20,7 +20,7 @@ export async function listMemberUserIds(projectId, date) {
 
 export async function listProjects(date = todayISO()) {
   const projects = await prisma.project.findMany({
-    orderBy: { createdAt: 'asc' },
+    orderBy: { order: 'asc' },
   });
 
   return Promise.all(
