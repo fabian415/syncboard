@@ -207,7 +207,15 @@ const RUNTIME_JS = [
   '          setMeasurerContent(pageNodes);',
   '          continue;',
   '        }',
+  // Splitting rebuilds the section from heading + list chunks, so every
+  // sibling block around the list (most visibly the <div class="image-row">
+  // of screenshots the prompts emit *after* the </ul>) has to be carried
+  // onto the split pages explicitly — otherwise it's silently dropped.
+  // Mirrors client/src/utils/slides.js.
   '        var list = listInfo.list, wrapper = listInfo.wrapper;',
+  '        var listBlockIndex = section.blocks.indexOf(wrapper || list);',
+  '        var leadingBlocks = listBlockIndex > 0 ? section.blocks.slice(0, listBlockIndex) : [];',
+  '        var trailingBlocks = listBlockIndex === -1 ? [] : section.blocks.slice(listBlockIndex + 1);',
   '        var items = Array.prototype.slice.call(list.children);',
   '        var firstChunk = true;',
   '        var i = 0;',
@@ -217,7 +225,7 @@ const RUNTIME_JS = [
   '          var listClone = list.cloneNode(false);',
   '          var containerNode = wrapper ? wrapper.cloneNode(false) : listClone;',
   '          if (wrapper) containerNode.appendChild(listClone);',
-  '          var baseNodes = pageNodes.concat(headingClone ? [headingClone] : []);',
+  '          var baseNodes = pageNodes.concat(headingClone ? [headingClone] : []).concat(firstChunk ? leadingBlocks.map(function (n) { return n.cloneNode(true); }) : []);',
   '          var addedAny = false;',
   '          while (i < items.length) {',
   '            var candidateLi = items[i].cloneNode(true);',
@@ -228,6 +236,19 @@ const RUNTIME_JS = [
   '          }',
   '          pageNodes = baseNodes.concat([containerNode]);',
   '          firstChunk = false;',
+  '        }',
+  // Blocks after the list (the image-row) always stay on the same page as
+  // the list's last chunk, even once they no longer fit — never on a page of
+  // their own. A list item can reference one of these images via a
+  // `[圖一](#1)` -> <a href="#imgN"> jump link (personalReportPrompt.js rule
+  // 10), and the click handler that resolves only ever searches the
+  // *current* page's DOM for the matching <img id="imgN"> — no cross-page
+  // lookup. Relocating the row would silently break every such link on this
+  // page. Letting the page overflow and scroll instead keeps the link
+  // working at the cost of a taller page.
+  '        if (trailingBlocks.length) {',
+  '          pageNodes = pageNodes.concat(trailingBlocks.map(function (n) { return n.cloneNode(true); }));',
+  '          setMeasurerContent(pageNodes);',
   '        }',
   '      }',
   '      if (pageNodes.length > headerNodes.length) pages.push(pageNodes.map(function (n) { return n.outerHTML; }).join(""));',
@@ -302,11 +323,83 @@ const RUNTIME_JS = [
   '  function isAtFirst() { return state.pageIndex === 0 && state.deckIndex === 0; }',
   '  function isAtLast() { return state.pageIndex === currentPages().length - 1 && state.deckIndex === paginatedDecks.length - 1; }',
   '',
+  // Mirrors PresentationModal.vue's enhanceImageRows: rows with more than 3
+  // images switch to a horizontally-scrolling single line via
+  // .image-row:has(img:nth-child(4)) (presentation.css, reused as-is here)
+  // instead of wrapping onto extra lines and growing the slide vertically.
+  // CSS alone can't wire up a click handler, so the prev/next buttons that
+  // drive that scroll are injected here after every render.
+  //
+  // The buttons are NOT appended inside the scrolling row itself. An
+  // overflow:auto element scrolls everything painted inside it, including an
+  // absolutely-positioned descendant whose containing block is that same
+  // element — position:absolute only takes it out of normal-flow layout, not
+  // out of the ancestor's scrolling. So the row is wrapped in a plain,
+  // non-scrolling .image-row-wrap and the buttons are appended to that — a
+  // sibling of the row, not a descendant — which is what keeps them pinned.
+  '  function enhanceImageRows(root) {',
+  '    var rows = root.querySelectorAll(".image-row");',
+  '    for (var i = 0; i < rows.length; i += 1) {',
+  '      (function (row) {',
+  '        if (row.parentElement && row.parentElement.classList.contains("image-row-wrap")) return;',
+  '        var imgs = row.querySelectorAll(":scope > img");',
+  '        if (imgs.length <= 3) return;',
+  '        var wrap = document.createElement("div");',
+  '        wrap.className = "image-row-wrap";',
+  '        row.replaceWith(wrap);',
+  '        wrap.appendChild(row);',
+  // One click advances by exactly one image's width (measured from the DOM,
+  // so it accounts for the row's gap) — a container-relative step overshoots
+  // the real scrollable range whenever there are only 1-2 images beyond the
+  // visible 3, clamping to the end on the first click and leaving "next"
+  // already disabled by the second.
+  '        function stepWidth() {',
+  '          var first = row.querySelector(":scope > img");',
+  '          var second = first && first.nextElementSibling;',
+  '          if (first && second && second.tagName === "IMG") return second.offsetLeft - first.offsetLeft;',
+  '          return row.clientWidth / 3;',
+  '        }',
+  '        function makeNavButton(direction, label, path) {',
+  '          var btn = document.createElement("button");',
+  '          btn.type = "button";',
+  '          btn.className = "image-row-nav image-row-" + (direction > 0 ? "next" : "prev");',
+  '          btn.setAttribute("aria-label", label);',
+  '          btn.innerHTML = \'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="\' + path + \'"/></svg>\';',
+  '          btn.addEventListener("click", function (e) {',
+  '            e.stopPropagation();',
+  '            row.scrollBy({ left: direction * stepWidth(), behavior: "smooth" });',
+  '          });',
+  '          return btn;',
+  '        }',
+  '        var prevBtn = makeNavButton(-1, "上一張圖片", "m15 18-6-6 6-6");',
+  '        var nextBtn = makeNavButton(1, "下一張圖片", "m9 18 6-6-6-6");',
+  // The initial "next" state deliberately does not come from measuring
+  // row.scrollWidth — read right after the replaceWith/appendChild move
+  // above (even a frame later), it intermittently still reflects layout from
+  // before the browser has reconciled the :has(img:nth-child(4))
+  // nowrap/overflow-x switch, disabling "next" immediately with nothing ever
+  // re-checking it afterward (only a `scroll` event does, which a disabled
+  // button can never produce). imgs.length > 3 above already proves there is
+  // more content than fits, so start "next" enabled unconditionally.
+  '        nextBtn.disabled = false;',
+  '        prevBtn.disabled = true;', // always true at scrollLeft 0
+  '        function updateNavState() {',
+  '          prevBtn.disabled = row.scrollLeft <= 1;',
+  '          nextBtn.disabled = row.scrollLeft >= row.scrollWidth - row.clientWidth - 1;',
+  '        }',
+  '        row.addEventListener("scroll", updateNavState);',
+  '        wrap.appendChild(prevBtn);',
+  '        wrap.appendChild(nextBtn);',
+  '      })(rows[i]);',
+  '    }',
+  '  }',
+  '',
   '  function render() {',
   '    var pages = currentPages();',
   '    var rawHtml = pages[state.pageIndex] || "";',
   '    var extracted = extractOwner(rawHtml);',
   '    slideEl.innerHTML = extracted.html;',
+  '    enhanceImageRows(slideEl);',
   '    slideEl.classList.remove("ex-anim");',
   '    void slideEl.offsetWidth;',
   '    slideEl.classList.add("ex-anim");',

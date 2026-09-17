@@ -268,6 +268,105 @@ function openLightboxOn(root, img) {
   lightboxIndex.value = images.indexOf(img);
 }
 
+// Rows with more than 3 images switch to a horizontally-scrolling single
+// line via `.image-row:has(img:nth-child(4))` (presentation.css) instead of
+// wrapping onto extra lines and growing the slide vertically. CSS alone
+// can't wire up a click handler, so the prev/next buttons that drive that
+// scroll are injected here after each slide render (idempotent — skips rows
+// already wrapped by a previous pass).
+//
+// The buttons are NOT appended inside the scrolling row itself. An
+// `overflow: auto` element scrolls everything painted inside it, including
+// an absolutely-positioned descendant whose containing block is that same
+// element — position:absolute only takes it out of normal-flow *layout*, not
+// out of the ancestor's scrolling. A button that's a child of `row` was
+// visibly sliding along with the images instead of staying pinned at the
+// edge (confirmed: its screen position tracked scrollLeft 1:1). So instead
+// the row is wrapped in a plain, non-scrolling `.image-row-wrap` and the
+// buttons are appended to *that* — a sibling of the row, not a descendant of
+// it — which is the standard fix for "carousel arrows that shouldn't scroll
+// with the carousel".
+function enhanceImageRows(root) {
+  if (!root) return;
+  root.querySelectorAll('.image-row').forEach((row) => {
+    if (row.parentElement?.classList.contains('image-row-wrap')) return;
+    const imageCount = row.querySelectorAll(':scope > img').length;
+    if (imageCount <= 3) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'image-row-wrap';
+    row.replaceWith(wrap);
+    wrap.appendChild(row);
+
+    // One click advances by exactly one image's width (measured from the
+    // actual DOM so it accounts for the row's gap), not a fraction of the
+    // container. A container-relative step like 0.9× overshoots the real
+    // scrollable range whenever there are only 1-2 images beyond the visible
+    // 3 (e.g. 5 images only has ~0.67× container width left to scroll), so
+    // the very first click clamps straight to the end and the "next" button
+    // is already disabled by the time a second click is attempted.
+    const stepWidth = () => {
+      const first = row.querySelector(':scope > img');
+      const second = first?.nextElementSibling;
+      if (first && second?.tagName === 'IMG') return second.offsetLeft - first.offsetLeft;
+      return row.clientWidth / 3;
+    };
+    const makeNavButton = (direction, label, path) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `image-row-nav image-row-${direction > 0 ? 'next' : 'prev'}`;
+      btn.setAttribute('aria-label', label);
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        row.scrollBy({ left: direction * stepWidth(), behavior: 'smooth' });
+      });
+      return btn;
+    };
+    const prevBtn = makeNavButton(-1, '上一張圖片', 'm15 18-6-6 6-6');
+    const nextBtn = makeNavButton(1, '下一張圖片', 'm9 18 6-6-6-6');
+    // The *initial* "next" state deliberately does NOT come from measuring
+    // row.scrollWidth. Read synchronously right after the replaceWith/
+    // appendChild move above (or even one requestAnimationFrame later),
+    // scrollWidth intermittently still reflects layout from before the
+    // browser has reconciled the row's :has(img:nth-child(4))
+    // nowrap/overflow-x switch, reading as if there were no overflow at all —
+    // which disables "next" immediately. Nothing would ever re-run this check
+    // afterward (only a `scroll` event does, and a disabled button can never
+    // produce one), so a single premature reading here means permanently
+    // stuck, not just briefly wrong. We already know independently, from
+    // imageCount > 3 above, that there IS more content than fits — so start
+    // "next" enabled unconditionally instead of re-deriving that from a
+    // layout read that isn't reliably ready yet.
+    nextBtn.disabled = false;
+    prevBtn.disabled = true; // always true at scrollLeft 0 — no layout read needed
+    const updateNavState = () => {
+      prevBtn.disabled = row.scrollLeft <= 1;
+      nextBtn.disabled = row.scrollLeft >= row.scrollWidth - row.clientWidth - 1;
+    };
+    row.addEventListener('scroll', updateNavState);
+    wrap.appendChild(prevBtn);
+    wrap.appendChild(nextBtn);
+  });
+}
+
+// Ref to the live .presentation-slide element, so image rows can be
+// re-enhanced when its content changes without the element itself being
+// remounted (e.g. jumpToDeck landing back on page 0, where :key="currentPage"
+// stays the same but v-html's content changes underneath it).
+const slideEl = ref(null);
+function setSlideEl(el) {
+  slideEl.value = el;
+  enhanceImageRows(el);
+}
+watch(
+  () => currentSlide.value.html,
+  async () => {
+    await nextTick();
+    enhanceImageRows(slideEl.value);
+  },
+);
+
 function handleSlideClick(e) {
   // Clicks on a player's own controls (play, seek, fullscreen) belong to the
   // <video>; don't let the lightbox/link handling below preventDefault them.
@@ -387,6 +486,7 @@ onUnmounted(() => {
         <Transition v-if="paginated" name="slide-fade" mode="out-in">
           <div
             :key="currentPage"
+            :ref="setSlideEl"
             class="presentation-slide"
             v-html="currentSlide.html"
             @click="handleSlideClick"

@@ -258,23 +258,22 @@ export function autoPaginateHtml(html, { width, height } = {}) {
         firstChunk = false;
       }
 
-      // Blocks after the list (the image-row) stay with the section's last
-      // chunk when they still fit, and otherwise get a continuation page of
-      // their own rather than being dropped.
+      // Blocks after the list (the image-row) always stay on the same page
+      // as the list's last chunk, even when they no longer fit — never on a
+      // continuation page of their own. A list item can reference one of
+      // these images via a `[圖一](#1)` -> <a href="#imgN"> jump link (see
+      // personalReportPrompt.js rule 10), and the click handler that jump
+      // resolves to only ever searches the *current* page's DOM for the
+      // matching <img id="imgN"> (see openLightboxOn in
+      // PresentationModal.vue) — there's no cross-page lookup. Relocating
+      // the image-row to its own page would silently break every such link
+      // on this page: the click would find no matching id and do nothing.
+      // Letting the page overflow and scroll instead (same trade-off the
+      // atomic 核心重點+補充說明 merge above already makes) keeps the link
+      // working at the cost of a taller page.
       if (trailingBlocks.length) {
-        const trial = [...pageNodes, ...trailingBlocks.map((n) => n.cloneNode(true))];
-        setMeasurerContent(trial);
-        if (fits()) {
-          pageNodes = trial;
-        } else {
-          startNewPage(true);
-          pageNodes = [
-            ...pageNodes,
-            ...(section.heading ? [cloneWithContinuedSuffix(section.heading)] : []),
-            ...trailingBlocks.map((n) => n.cloneNode(true)),
-          ];
-          setMeasurerContent(pageNodes);
-        }
+        pageNodes = [...pageNodes, ...trailingBlocks.map((n) => n.cloneNode(true))];
+        setMeasurerContent(pageNodes);
       }
     }
 

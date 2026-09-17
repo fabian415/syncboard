@@ -474,6 +474,74 @@
   object-fit: cover;
 }
 
+/* Past 3 images, wrapping onto extra lines would grow the slide vertically
+   instead — scroll horizontally in a single line instead. :has() (not a JS
+   image count) drives the switch so autoPaginateHtml's height measurement,
+   which clones this same markup against this same stylesheet, sees the real
+   single-line height rather than a wrapped, multi-row one. The prev/next
+   buttons that actually drive the scroll are injected by PresentationModal's
+   enhanceImageRows (and exportSlides.js's RUNTIME_JS equivalent), since a
+   click handler can't be expressed in CSS. */
+.presentation-slide .image-row:has(img:nth-child(4)) {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+}
+.presentation-slide .image-row:has(img:nth-child(4)) img {
+  flex: 0 0 calc(33.333% - 8px);
+  max-width: calc(33.333% - 8px);
+  scroll-snap-align: start;
+}
+.presentation-slide .image-row:has(img:nth-child(4))::-webkit-scrollbar {
+  height: 6px;
+}
+.presentation-slide .image-row:has(img:nth-child(4))::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+}
+/* enhanceImageRows wraps a scrollable row in this plain, non-scrolling div
+   and appends the nav buttons to it instead of to the row itself. The row's
+   own `overflow-x: auto` scrolls *everything* painted inside it, including
+   an absolutely-positioned descendant whose containing block is that same
+   element — so a button parented to the row would visibly slide along with
+   the images instead of staying pinned at the edge. Parenting the buttons to
+   this outer, non-scrolling wrapper instead is what keeps them fixed. */
+.image-row-wrap {
+  position: relative;
+}
+.image-row-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.image-row-nav:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+.image-row-nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.image-row-prev {
+  left: 6px;
+}
+.image-row-next {
+  right: 6px;
+}
+
 /* Embedded video (`!video[標題](網址)` in the source markdown). The explicit
    aspect-ratio is load-bearing, not decoration: autoPaginateHtml measures a
    slide's height off this same CSS, and without it a <video> whose metadata
