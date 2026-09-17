@@ -397,20 +397,31 @@ const RUNTIME_JS = [
   '  lightboxNextBtn.addEventListener("click", function (e) { e.stopPropagation(); lightboxNext(); });',
   '  lightboxImg.addEventListener("click", function (e) { e.stopPropagation(); });',
   '',
+  '  function lightboxImagesAndIndexOf(img) {',
+  '    var imgEls = Array.prototype.slice.call(slideEl.querySelectorAll("img[src]"));',
+  '    return { images: imgEls.map(function (el) { return el.src; }), index: imgEls.indexOf(img) };',
+  '  }',
   '  slideEl.addEventListener("click", function (e) {',
   '    if (e.target.closest("video")) return;',
   '    var link = e.target.closest("a[href]");',
   '    if (link) {',
   '      e.preventDefault();',
+  // "#imgN" links (see personalReportPrompt.js `[圖一](#1)` syntax) jump to a
+  // specific <img id="imgN"> on the slide instead of navigating anywhere.
+  '      var href = link.getAttribute("href") || "";',
+  '      if (href.indexOf("#") === 0) {',
+  '        var targetImg = slideEl.querySelector(\'img[id="\' + href.slice(1) + \'"]\');',
+  '        if (targetImg) { var r = lightboxImagesAndIndexOf(targetImg); openLightbox(r.images, r.index); }',
+  '        return;',
+  '      }',
   '      window.open(link.href, "_blank", "noopener");',
   '      return;',
   '    }',
   '    var img = e.target.closest("img[src]");',
   '    if (img) {',
   '      e.preventDefault();',
-  '      var imgEls = Array.prototype.slice.call(slideEl.querySelectorAll("img[src]"));',
-  '      var images = imgEls.map(function (el) { return el.src; });',
-  '      openLightbox(images, imgEls.indexOf(img));',
+  '      var res = lightboxImagesAndIndexOf(img);',
+  '      openLightbox(res.images, res.index);',
   '    }',
   '  });',
   '',
@@ -487,7 +498,11 @@ function convertInline(node) {
     } else if (tag === 'span') {
       result += `\`${convertInline(child).trim()}\``;
     } else if (tag === 'a') {
-      result += `[${convertInline(child).trim()}](${child.getAttribute('href') || ''})`;
+      // "#imgN" is the rendered form of the authoring syntax `[圖一](#N)` (see
+      // personalReportPrompt.js rule 10) — round-trip it back to that form
+      // rather than leaking the internal "img" id prefix into exported Markdown.
+      const href = (child.getAttribute('href') || '').replace(/^#img(\d+)$/, '#$1');
+      result += `[${convertInline(child).trim()}](${href})`;
     } else if (tag === 'img' || tag === 'video') {
       result += convertMedia(child);
     } else if (tag === 'br') {

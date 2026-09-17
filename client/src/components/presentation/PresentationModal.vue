@@ -259,6 +259,15 @@ function handleKeydown(e) {
   else if (e.key === 'ArrowLeft') prev();
 }
 
+// Opens the lightbox on one specific image, keeping the full per-slide image
+// list so Esc/←/→ still browse every image on the page (see handleKeydown) —
+// shared by both direct image clicks and #imgN reference-link clicks below.
+function openLightboxOn(root, img) {
+  const images = Array.from(root.querySelectorAll('img[src]'));
+  lightboxImages.value = images.map((el) => el.src);
+  lightboxIndex.value = images.indexOf(img);
+}
+
 function handleSlideClick(e) {
   // Clicks on a player's own controls (play, seek, fullscreen) belong to the
   // <video>; don't let the lightbox/link handling below preventDefault them.
@@ -266,15 +275,22 @@ function handleSlideClick(e) {
   const link = e.target.closest('a[href]');
   if (link) {
     e.preventDefault();
+    // "#imgN" is a link authored as `[圖一](#img1)` (see personalReportPrompt.js)
+    // that jumps straight to a specific image instead of navigating anywhere —
+    // the matching <img id="img1"> lives elsewhere on the same slide.
+    const href = link.getAttribute('href') || '';
+    if (href.startsWith('#')) {
+      const targetImg = e.currentTarget.querySelector(`img[id="${CSS.escape(href.slice(1))}"]`);
+      if (targetImg) openLightboxOn(e.currentTarget, targetImg);
+      return;
+    }
     window.open(link.href, '_blank', 'noopener');
     return;
   }
   const img = e.target.closest('img[src]');
   if (img) {
     e.preventDefault();
-    const images = Array.from(e.currentTarget.querySelectorAll('img[src]'));
-    lightboxImages.value = images.map((el) => el.src);
-    lightboxIndex.value = images.indexOf(img);
+    openLightboxOn(e.currentTarget, img);
   }
 }
 

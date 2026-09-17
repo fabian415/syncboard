@@ -1,9 +1,9 @@
 import { VIDEO_TAG_WHITELIST, VIDEO_SYNTAX_RULE } from './mediaSyntax.js';
 
 const EXAMPLE_INPUT = `### - 核心重點 (Key Highlights)
-* [NEW DONE] **[功能/模組]**：完成支付 API 重構，降低 30% 延遲
+* [NEW DONE] **[功能/模組]**：完成支付 API 重構，降低 30% 延遲，詳見 [圖一](#1)
   * [UPDATED] **[子項目]**：延遲下降主要來自 cache 命中率提升與 DB connection pool 調優
-* 🎉 [NEW DONE] **[修復/優化]**：解決 Deadlock 問題
+* 🎉 [NEW DONE] **[修復/優化]**：解決 Deadlock 問題，架構調整如 [圖二](#2)
 * ✅ **[上線]**：v2.1.0 發布
 * [WIP] **[文件]**：補齊 API 串接文件
 * **[測試]**：新增 12 組回歸測試 [測試報告](https://example.com/regression-report)
@@ -48,19 +48,19 @@ const EXAMPLE_INPUT = `### - 核心重點 (Key Highlights)
 const EXAMPLE_OUTPUT = `<h1>🚀 TungYi｜DeviceOn</h1>
 <h2>1. 核心重點 (Key Highlights)</h2>
 <ul>
-  <li>🎉 <strong>[功能/模組]</strong>：完成支付 API 重構，降低 30% 延遲
+  <li>🎉 <strong>[功能/模組]</strong>：完成支付 API 重構，降低 30% 延遲，詳見 <a href="#img1">圖一</a>
     <ul>
       <li>⚡ <strong>[子項目]</strong>：延遲下降主要來自 cache 命中率提升與 DB connection pool 調優</li>
     </ul>
   </li>
-  <li>🎉 <strong>[修復/優化]</strong>：解決 Deadlock 問題</li>
+  <li>🎉 <strong>[修復/優化]</strong>：解決 Deadlock 問題，架構調整如 <a href="#img2">圖二</a></li>
   <li>✅ <strong>[上線]</strong>：v2.1.0 發布</li>
   <li>⏳ <strong>[文件]</strong>：補齊 API 串接文件</li>
   <li><strong>[測試]</strong>：新增 12 組回歸測試（<a href="https://example.com/regression-report">測試報告</a>）</li>
 </ul>
 <div class="image-row">
-  <img src="https://example.com/img-before-after.png" alt="壓測前後延遲比較">
-  <img src="https://example.com/img-architecture.png" alt="新版部署架構圖">
+  <img id="img1" src="https://example.com/img-before-after.png" alt="壓測前後延遲比較">
+  <img id="img2" src="https://example.com/img-architecture.png" alt="新版部署架構圖">
 </div>
 <div class="video-block">
   <video src="https://example.com/checkout-demo.mp4" controls preload="metadata" playsinline title="結帳流程 Demo"></video>
@@ -129,13 +129,17 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎。你會收�
 1. 只能輸出純 HTML 片段本體，不可包含 <html>、<head>、<body> 標籤，也不可用 markdown code fence（\`\`\`）包住輸出。
 2. 輸出恰好 2 個投影片片段，片段之間用一行 "<!-- SLIDE -->" 分隔。第一頁＝核心重點（最多 5 條）+ 補充說明（若補充說明為空則第一頁只有核心重點；最多 2 條）。第二頁＝下週計畫 + 討論/阻礙（若有）+ 相關連結（若有），此頁維持忠於原文、不省略任何一條。若某個選填子區塊原文是空的、寫「無」、「無明顯阻礙」、「none」或其他明確表示「沒有這類事項」的文字，就完全省略該區塊，不要生成空的或只寫「無」的 <div>。
 3. 只能使用以下標籤與 class，不得使用其他標籤、class 或 inline style、script：
-   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="...">, <a href="...">, ${VIDEO_TAG_WHITELIST}。狀態 icon 是純文字 emoji，不需要也不可以用 <span> 之類的標籤包起來。
-4. 原文中任何地方出現的 Markdown 連結 \`[顯示文字](網址)\`（不限於「相關連結」區塊，核心重點、補充說明、下週計畫、討論/阻礙裡出現的也一樣），都必須轉換成 \`<a href="網址">顯示文字</a>\` 輸出；絕對不能把 \`[顯示文字](網址)\` 這種方括號＋括號的原始寫法直接留在輸出的 HTML 文字裡。
+   <h1>, <h2>, <ul>, <li>, <strong>, <div class="card">, <div class="card warning">, <div class="kms-link">, <div class="grid">（內部僅能包純 <div>）, <div class="image-row">（內部僅能包 <img>）, <img src="..." alt="..." id="...">（id 為選填，只有規則 10 的圖片跳轉語法需要時才加）, <a href="...">, ${VIDEO_TAG_WHITELIST}。狀態 icon 是純文字 emoji，不需要也不可以用 <span> 之類的標籤包起來。
+4. 原文中任何地方出現的 Markdown 連結 \`[顯示文字](網址)\`（不限於「相關連結」區塊，核心重點、補充說明、下週計畫、討論/阻礙裡出現的也一樣），都必須轉換成 \`<a href="網址">顯示文字</a>\` 輸出；絕對不能把 \`[顯示文字](網址)\` 這種方括號＋括號的原始寫法直接留在輸出的 HTML 文字裡。**例外**：網址部分是 \`#N\`（井字號加正整數，例如 \`(#1)\`）時不適用本規則，改依規則 10 的圖片跳轉語法處理。
 5. 第一頁 <h1> 用 "🚀 {成員姓名}｜{Product 名稱}"，第二頁 <h1> 用 "📋 {成員姓名} 下週計畫與討論"。
 6. 每個區塊的 <h2> 前面都要加上編號（例如 "1. 核心重點 (Key Highlights)"），編號依固定順序「核心重點 → 補充說明 → 下週計畫 → 討論/阻礙 → 相關連結」**跨兩頁投影片連續編號**（第一頁最後編到幾號，第二頁第一個 <h2> 就接續下一號，不重新從 1 開始）。若某個選填區塊被省略，後面區塊的編號要依序遞補、不可留空號或跳號。
 7. 原文的項目符號若有縮排（例如以兩個空白開頭的 \`* 文字\`），代表它是上一個較淺縮排項目的子項目：輸出時要把這些子項目包成巢狀的 <ul><li>...</li></ul>，放在父層 <li> 內部（即 <li>父項目文字<ul><li>子項目 1</li><li>子項目 2</li></ul></li>）；子項目內容一樣忠於原文、只做語句層級的微幅潤飾，不能省略或另外新增。計算「核心重點最多 5 條」時只計算最外層（無縮排）的項目數，子項目不單獨計入上限、永遠跟著所屬的父項目一起保留或一起被捨棄。**只要父項目有被保留，它底下每一條縮排的子項目就一定要輸出成巢狀 <li>，絕對不能省略、不能併進父項目的文字裡、也不能攤平成最外層項目**；下列情況都不構成省略子項目的理由，一律照樣輸出：(a) 子項目開頭自己帶了狀態標籤（例如 \`  * [UPDATED] ...\`）——標籤只決定 icon，不改變層級，有縮排就是子項目；(b) 子項目的內容是還沒填寫的範本佔位文字（例如 \`...\`、\`[子項目]\`）；(c) 子項目看起來跟父項目重複或資訊量很少。第一頁精簡只作用在「最外層項目的條數」上，不是拿來刪子項目的。
 8. 原文中若有獨立成行的圖片語法 \`![替代文字](網址)\`（該行本身只有圖片語法，不是某個項目文字的一部分），要轉換成 <img src="網址" alt="替代文字">，並放在該圖片在原文中所屬的區塊裡（緊接在該區塊其餘內容之後）。**不論張數，所有 <img> 一律要包在 <div class="image-row"> 裡面**：同一區塊裡有 2 張以上連續的圖片就包在同一個 <div class="image-row"> 裡讓它們並排顯示，例如 <div class="image-row"><img src="..." alt="..."><img src="..." alt="..."></div>；只有 1 張時也一樣要包，輸出成 <div class="image-row"><img src="..." alt="..."></div>，**絕對不能**讓 <img> 單獨出現在 <div class="image-row"> 之外。不能省略任何一張圖片，也不能新增原文沒有的圖片。
 9. ${VIDEO_SYNTAX_RULE}
+10. 若原文文字裡出現 Markdown 連結 \`[顯示文字](#N)\`（網址部分是井字號加一個正整數，例如 \`(#1)\`、\`(#2)\`，不是真的網址），代表撰寫者要讓這段文字被點擊後直接跳到、放大顯示「同一份原文裡第 N 張圖片」（圖片依原文 \`![替代文字](網址)\` 出現的先後順序從 1 開始編號，跨越不同 <div class="image-row"> 也連續編號，不因區塊分開而重新從 1 算）。這種 \`#N\` 連結**不是**外部連結、不適用規則 4 的一般連結轉換，轉換方式固定為：
+    - 連結本身輸出成 \`<a href="#imgN">顯示文字</a>\`（N 維持原文數字，前面加上 "img" 字首）。
+    - 找到原文中第 N 張圖片，幫它輸出的 <img> 加上同樣的 \`id="imgN"\` 屬性（例如 \`<img id="img2" src="..." alt="...">\`），其餘屬性與規則 8 相同；沒有被連結指到的圖片不用加 id。
+    - 若同一張圖片被多個 \`[文字](#N)\` 連結指到，id 只需輸出一次；若原文的 N 超過實際圖片總數，連結一樣照輸出 \`<a href="#imgN">\`，不用特別處理或報錯。
 
 以下是一組範例（示範同一份報告裡混用方括號寫法與 emoji 寫法，兩者都要轉成對應的純文字 emoji）：
 
