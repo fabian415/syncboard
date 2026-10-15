@@ -273,6 +273,28 @@ export function parseProductSections(markdown) {
   return sections;
 }
 
+const SECOND_PAGE_HEADING_RE = /^###\s.*(下週計畫|討論|阻礙|相關連結)/;
+const EMPTY_BLOCK_RE = /^(無|無明顯阻礙|none|n\/a)?[。.]?$/i;
+
+/**
+ * Whether a Product section has anything for slide 2 (下週計畫 / 討論阻礙 /
+ * 相關連結) beyond headings, HTML comments, wrapper <div>s and "無".
+ */
+function hasSecondPageContent(sectionMarkdown) {
+  const blocks = sectionMarkdown.split(/^(?=###\s)/m);
+  return blocks.some((block) => {
+    const [heading, ...body] = block.split('\n');
+    if (!SECOND_PAGE_HEADING_RE.test(heading)) return false;
+    return body
+      .join('\n')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<\/?div[^>]*>/g, '')
+      .split('\n')
+      .map((line) => line.replace(/^\s*[-*]\s*(\[[ xX]\])?\s*/, '').trim())
+      .some((line) => line && !/^-{3,}$/.test(line) && !EMPTY_BLOCK_RE.test(line));
+  });
+}
+
 function normalize(name) {
   return name.trim().toLowerCase();
 }
@@ -317,12 +339,17 @@ export async function distributeReport(userId, periodStart) {
       continue;
     }
 
-    const pages = await generateValidatedSlides((opts) =>
+    let pages = await generateValidatedSlides((opts) =>
       buildDistributeMessages(
         { memberName: member.name, productName: project.name, sectionMarkdown: section.content },
         opts,
       ),
     );
+    // Without any page-2 source the model tends to pad page 2 with a copy of
+    // the highlights titled "下週計畫" — drop it rather than show fake content.
+    if (pages.length > 1 && !hasSecondPageContent(section.content)) {
+      pages = pages.slice(0, 1);
+    }
 
     const mdPath = reportMarkdownPath(project.name, member.name, periodStart);
     const htmlPath = reportHtmlPath(project.name, member.name, periodStart);
