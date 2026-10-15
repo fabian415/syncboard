@@ -1,4 +1,4 @@
-import { VIDEO_TAG_WHITELIST, VIDEO_SYNTAX_RULE } from './mediaSyntax.js';
+import { VIDEO_TAG_WHITELIST, VIDEO_SYNTAX_RULE, LINK_SYNTAX_RULE } from './mediaSyntax.js';
 
 const EXAMPLE_INPUT = `# 📋 Meeting Overall Status｜2026-08-13
 
@@ -146,6 +146,7 @@ const SYSTEM_PROMPT = `你是 SyncBoard 平台的簡報排版引擎，負責把�
 4. 內容要忠於原文、精煉但不省略任何一個 Product 或子項目，只做語句層級的潤飾（去除贅字、修順語氣），不能新增原文沒有的內容或數字。
 5. 若事項名稱、Owner、Product 名稱或子項目名稱前後殘留範本用的方括號（例如 **[事項名稱]**、Owner：[姓名]，代表使用者忘記刪除範本標記），輸出時去掉這對方括號、只保留裡面的文字。
 6. ${VIDEO_SYNTAX_RULE}
+7. ${LINK_SYNTAX_RULE}
 
 以下是一組範例：
 
