@@ -103,6 +103,60 @@ export async function listMemberReportArchiveEntries(userId) {
   return { userName, entries };
 }
 
+// Bundles everything a member produced within [start, end] (inclusive): their
+// personal report markdowns, plus the per-project report.md /
+// presentation.html that Refactor distributed into each project.
+export async function listMemberExportEntries(userId, start, end) {
+  assertValidDate(start);
+  assertValidDate(end);
+  if (start > end) {
+    throw new HttpError(400, 'Invalid date range', '起始日不可晚於終止日');
+  }
+  const userName = await resolveUserName(userId);
+  const dateRange = { gte: new Date(start), lte: new Date(end) };
+
+  const entries = [];
+
+  const memberRows = await prisma.memberReport.findMany({
+    where: { userId, periodStart: dateRange },
+    orderBy: { periodStart: 'asc' },
+  });
+  for (const row of memberRows) {
+    const date = row.periodStart.toISOString().slice(0, 10);
+    const markdown = await readTextFile(memberReportMarkdownPath(userName, date));
+    if (markdown != null) {
+      entries.push({ name: `personal/${date}.md`, content: markdown });
+    }
+  }
+
+  const reportRows = await prisma.report.findMany({
+    where: { userId, reportDate: dateRange },
+    orderBy: [{ reportDate: 'asc' }],
+    include: { project: { select: { name: true } } },
+  });
+  for (const row of reportRows) {
+    const date = row.reportDate.toISOString().slice(0, 10);
+    const projectName = row.project.name;
+    // Same sanitization fsStore applies to folder names, so the zip entry
+    // can't escape its directory via a "/" in the project name.
+    const folder = `projects/${projectName.replace(/[\\/:*?"<>|]/g, '_')}/${date}`;
+    const markdown = await readTextFile(reportMarkdownPath(projectName, userName, date));
+    if (markdown != null) {
+      entries.push({ name: `${folder}/report.md`, content: markdown });
+    }
+    const html = await readTextFile(reportHtmlPath(projectName, userName, date));
+    if (html != null) {
+      entries.push({ name: `${folder}/presentation.html`, content: html });
+    }
+  }
+
+  if (entries.length === 0) {
+    throw new HttpError(404, 'No reports found', `${userName} 在 ${start} ~ ${end} 之間沒有任何報告可下載`);
+  }
+
+  return { userName, entries };
+}
+
 export async function saveMarkdown(userId, periodStart, markdown) {
   assertValidDate(periodStart);
   const userName = await resolveUserName(userId);

@@ -11,6 +11,7 @@ import MeetingStatusDeepDiveView from '../views/MeetingStatusDeepDiveView.vue';
 import ShowcaseView from '../views/ShowcaseView.vue';
 import ShowcaseDeepDiveView from '../views/ShowcaseDeepDiveView.vue';
 import ReleaseNotesView from '../views/ReleaseNotesView.vue';
+import ReportExportView from '../views/ReportExportView.vue';
 
 const routes = [
   {
@@ -37,6 +38,7 @@ const routes = [
       { path: 'showcase', name: 'showcase', component: ShowcaseView },
       { path: 'showcase/deep-dive', name: 'showcase-deep-dive', component: ShowcaseDeepDiveView },
       { path: 'release-notes', name: 'release-notes', component: ReleaseNotesView },
+      { path: 'export', name: 'report-export', component: ReportExportView },
     ],
   },
 ];

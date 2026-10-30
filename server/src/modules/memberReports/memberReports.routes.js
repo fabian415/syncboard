@@ -3,6 +3,7 @@ import {
   listMembersHandler,
   getPersonalReportHandler,
   downloadReportsArchiveHandler,
+  downloadExportArchiveHandler,
   saveMarkdownHandler,
   distributeHandler,
   generateSampleHandler,
@@ -12,6 +13,7 @@ export const membersRouter = Router();
 
 membersRouter.get('/', listMembersHandler);
 membersRouter.get('/:userId/reports/archive', downloadReportsArchiveHandler);
+membersRouter.get('/:userId/reports/export', downloadExportArchiveHandler);
 membersRouter.get('/:userId/report/:periodStart', getPersonalReportHandler);
 membersRouter.put('/:userId/report/:periodStart/markdown', saveMarkdownHandler);
 membersRouter.post('/:userId/report/:periodStart/distribute', distributeHandler);

@@ -46,6 +46,34 @@ export async function downloadReportsArchiveHandler(req, res, next) {
   }
 }
 
+const exportQuerySchema = z.object({ start: z.string(), end: z.string() });
+
+export async function downloadExportArchiveHandler(req, res, next) {
+  try {
+    const { start, end } = exportQuerySchema.parse(req.query);
+    const { userName, entries } = await memberReportsService.listMemberExportEntries(req.params.userId, start, end);
+
+    const baseName = `${userName}_${start}_${end}`;
+    const asciiFallback = `${baseName.replace(/[^\x20-\x7e]/g, '_')}.zip`;
+    const utf8Name = encodeURIComponent(`${baseName}.zip`);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${asciiFallback}"; filename*=UTF-8''${utf8Name}`,
+    );
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', next);
+    archive.pipe(res);
+    for (const entry of entries) {
+      archive.append(entry.content, { name: `${baseName}/${entry.name}` });
+    }
+    await archive.finalize();
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function saveMarkdownHandler(req, res, next) {
   try {
     const { markdown } = markdownSchema.parse(req.body);

@@ -9,7 +9,7 @@ import GlobalSearch from './GlobalSearch.vue';
 const route = useRoute();
 const PERIOD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const NO_NAV_ROUTES = ['home', 'release-notes'];
+const NO_NAV_ROUTES = ['home', 'release-notes', 'report-export'];
 const showNav = computed(() => !NO_NAV_ROUTES.includes(route.name));
 const period = computed(() => (PERIOD_RE.test(route.query.period) ? route.query.period : todayISO()));
 

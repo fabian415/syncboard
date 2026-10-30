@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { Sparkles } from 'lucide-vue-next';
+import { Sparkles, PackageOpen, ArrowRight } from 'lucide-vue-next';
 import MeetingDateGate from '../components/common/MeetingDateGate.vue';
 
 const router = useRouter();
@@ -27,5 +27,17 @@ function onConfirmDate(date) {
       subheading="請先選擇要查看的會議日期，即可進入成果展示與我的報告。"
       @confirm="onConfirmDate"
     />
+
+    <router-link
+      to="/export"
+      class="flex items-center w-full max-w-lg px-5 py-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all"
+    >
+      <PackageOpen class="w-5 h-5 mr-3 text-blue-600 shrink-0" />
+      <div class="flex-1">
+        <div class="font-bold text-gray-700">報告打包下載</div>
+        <div class="text-xs text-gray-500">依日期區間與成員，打包下載個人報告與各專案簡報</div>
+      </div>
+      <ArrowRight class="w-4 h-4 text-gray-400" />
+    </router-link>
   </div>
 </template>
