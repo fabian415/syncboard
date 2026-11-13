@@ -102,6 +102,49 @@ function handleDrop(e) {
   addFiles(Array.from(e.dataTransfer?.files || []));
 }
 
+// Ctrl+V upload: screenshots / "copy image" land in clipboardData.files.
+// Browsers name those generically ("image.png"), so every paste would
+// collide visually in the asset list — rename them with a timestamp.
+// Files copied from Explorer keep their real names.
+const PASTE_MIME_EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' };
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+let lastPasteStamp = '';
+let pasteSeq = 0;
+
+function renamePastedFile(file) {
+  const isGeneric = !file.name || /^image\.\w+$/i.test(file.name);
+  const ext = PASTE_MIME_EXT[file.type];
+  if (!isGeneric || !ext) return file;
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
+  // Separate pastes within the same second would otherwise share a name.
+  pasteSeq = stamp === lastPasteStamp ? pasteSeq + 1 : 0;
+  lastPasteStamp = stamp;
+  const suffix = pasteSeq > 0 ? `-${pasteSeq + 1}` : '';
+  return new File([file], `pasted-${stamp}${suffix}.${ext}`, { type: file.type, lastModified: file.lastModified });
+}
+
+function handlePaste(e) {
+  // Leave normal text pasting in inputs (e.g. the header search box) alone.
+  const target = e.target;
+  if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) {
+    return;
+  }
+  const files = Array.from(e.clipboardData?.files || []);
+  if (files.length === 0) return;
+  e.preventDefault();
+  addFiles(files.map((f) => renamePastedFile(f)));
+}
+
+document.addEventListener('paste', handlePaste);
+onUnmounted(() => {
+  document.removeEventListener('paste', handlePaste);
+});
+
 function addFiles(files) {
   for (const file of files) {
     const assetType = assetTypeForFile(file);
@@ -136,6 +179,9 @@ function startUpload(entry) {
     onSuccess() {
       entry.status = 'done';
       entry.progress = 100;
+      // Finished rows are just confirmation — the asset now shows in the
+      // list below — so clear them after 3s. Errors stay until dismissed.
+      setTimeout(() => dismissUpload(entry), 3000);
       deepDive.loadAssets(date).then(() => deepDive.startPolling(date));
     },
     onError(err) {
@@ -311,7 +357,7 @@ function goBack() {
       @drop.prevent="handleDrop"
     >
       <UploadCloud class="w-8 h-8 mx-auto text-gray-400 mb-2" />
-      <p class="text-sm text-gray-600">拖拉檔案到這裡，或點擊選擇檔案</p>
+      <p class="text-sm text-gray-600">拖拉檔案到這裡、點擊選擇檔案，或直接 Ctrl+V 貼上截圖</p>
       <p class="mt-1 text-xs text-gray-400">
         支援 .html / .png .jpg .gif .webp / .mp4 .webm .m4v .mov / .pptx，支援大檔案續傳
       </p>

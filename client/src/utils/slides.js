@@ -79,10 +79,17 @@ const OWNER_HEADING_RE = /^\s*Owner\s*[：:]/i;
 // prompts number the headings ("2. 補充說明 (Why)").
 const STICKY_HEADING_RE = /補充說明|[(（]\s*why\s*[)）]/i;
 
+// 「核心重點 (Key Highlights)」 is always kept whole on one page, even when
+// no 補充說明 follows it. Otherwise, once the browser is zoomed in (or the
+// window is small) its bullet list gets split item-by-item onto a
+// 「（續）」 page, scattering one feature's sub-bullets across two slides.
+const ATOMIC_HEADING_RE = /核心重點|key\s*highlights/i;
+
 // Folds every sticky section into the section it belongs to, producing one
 // indivisible unit (heading + list + images/video + Why card). `atomic`
-// marks those merged units so pagination keeps them whole on one page —
-// letting an oversized one scroll — instead of splitting them.
+// marks those merged units — and every 核心重點 section on its own — so
+// pagination keeps them whole on one page, letting an oversized one scroll,
+// instead of splitting them.
 function mergeStickySections(sections) {
   const merged = [];
   for (const section of sections) {
@@ -92,6 +99,7 @@ function mergeStickySections(sections) {
       prev.atomic = true;
       continue;
     }
+    if (section.heading && ATOMIC_HEADING_RE.test(section.heading.textContent || '')) section.atomic = true;
     merged.push(section);
   }
   return merged;
