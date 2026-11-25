@@ -4,7 +4,8 @@
 # the unoconvert client (server/src/deepDive/pptxConverter.js).
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i 's|deb.debian.org|mirror.twds.com.tw|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y --no-install-recommends \
         libreoffice-impress fonts-noto-cjk python3-pip python3-uno \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --break-system-packages --no-cache-dir unoserver

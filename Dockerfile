@@ -2,7 +2,8 @@
 
 # ---- Stage 1: install workspace deps, build client, generate Prisma client ----
 FROM node:20-bookworm-slim AS build
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
+RUN sed -i 's|deb.debian.org|mirror.twds.com.tw|g' /etc/apt/sources.list.d/debian.sources \
+  && apt-get update -y && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
@@ -27,7 +28,8 @@ FROM node:20-bookworm-slim AS runtime
 # client (talks to the sidecar over the compose network — no local `uno`/
 # LibreOffice install needed for the client side) plus poppler-utils to
 # rasterize the PDF the sidecar returns into per-slide PNGs.
-RUN apt-get update -y && apt-get install -y --no-install-recommends \
+RUN sed -i 's|deb.debian.org|mirror.twds.com.tw|g' /etc/apt/sources.list.d/debian.sources \
+  && apt-get update -y && apt-get install -y --no-install-recommends \
     openssl poppler-utils python3-pip \
   && rm -rf /var/lib/apt/lists/* \
   && pip install --break-system-packages --no-cache-dir unoserver
