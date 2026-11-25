@@ -72,8 +72,8 @@ window.addEventListener('keydown', forwardKeyToDeck);
 // External link clicked inside the deck (forwarded by the server-injected
 // shim). Opened from this unsandboxed page rather than giving the frame
 // allow-popups(-to-escape-sandbox), which would let a deck script open
-// same-origin URLs outside the sandbox. Only cross-origin http(s) URLs are
-// accepted. The click inside the frame grants user activation to its
+// same-origin URLs outside the sandbox. Only http(s) URLs are accepted (see
+// the origin check below). The click inside the frame grants user activation to its
 // ancestors too, so this window.open isn't popup-blocked.
 //
 // Opening a tab knocks the browser out of fullscreen; flag it so
@@ -94,7 +94,12 @@ function handleDeckMessage(e) {
   } catch {
     return;
   }
-  if (!/^https?:$/.test(url.protocol) || url.origin === window.location.origin) return;
+  if (!/^https?:$/.test(url.protocol)) return;
+  // Same-origin: only uploaded deck assets. Their HTML is served with a CSP
+  // sandbox header (see deepDiveAssetsMiddleware), so it stays isolated from
+  // this app even as a top-level tab; uploads can't be SVG/other scriptable
+  // types. Anything else on this origin (the app, /api) isn't opened.
+  if (url.origin === window.location.origin && !url.pathname.startsWith('/deep-dive-assets/')) return;
   suppressFullscreenClose = true;
   window.open(url.href, '_blank', 'noopener,noreferrer');
 }

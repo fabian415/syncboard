@@ -23,14 +23,28 @@ addEventListener('message', function (e) {
     cancelable: true,
   }));
 });
-// The frame is sandboxed without allow-popups, so a link click (or the
-// deck's own window.open) can't open a new window from here — and a
-// cross-site page usually refuses to load inside the frame anyway. Hand
-// external links to the parent instead, which opens them in a new tab.
-// Same-origin / in-page links keep their normal in-frame behavior.
+// Everything below only applies while playing inside the SyncBoard player
+// iframe. Opened as its own tab, the deck runs as a normal page (still
+// sandboxed by the CSP header set below).
+var inPlayer = window.parent !== window;
+// The player frame is sandboxed without allow-popups, so a link click
+// can't open a new window from here — and a cross-site page usually
+// refuses to load inside the frame anyway. Hand links to the parent
+// instead, which opens them in a new tab.
 document.addEventListener('click', function (e) {
+  if (!inPlayer) return;
   var a = e.target && e.target.closest && e.target.closest('a[href]');
-  if (!a || !/^https?:$/.test(a.protocol) || a.origin === location.origin) return;
+  if (!a || !/^https?:$/.test(a.protocol)) return;
+  // A link back into this same deck (only the #fragment differs, e.g.
+  // "#slide-3") is in-deck navigation: follow it here instead of popping
+  // the deck open a second time.
+  if (a.origin === location.origin && a.pathname === location.pathname && a.search === location.search) {
+    if (a.target && a.target !== '_self') {
+      e.preventDefault();
+      location.hash = a.hash;
+    }
+    return;
+  }
   e.preventDefault();
   window.parent.postMessage({ type: 'syncboard:open-link', url: a.href }, '*');
 }, true);
@@ -38,7 +52,7 @@ document.addEventListener('click', function (e) {
 // own fullscreen button / F key would silently fail. Route those requests
 // to the parent, which fullscreens the whole player (the click/keypress
 // inside the frame grants user activation to the parent too).
-(function () {
+if (inPlayer) (function () {
   function forwardFullscreen() {
     window.parent.postMessage({ type: 'syncboard:fullscreen' }, '*');
     return Promise.resolve();
@@ -89,6 +103,13 @@ export function deepDiveAssetsMiddleware(staticRoot) {
 
     try {
       const html = await fs.readFile(filePath, 'utf-8');
+      // Uploaded HTML is untrusted. The player's iframe sandbox only protects
+      // it while it's inside that iframe; this header sandboxes the document
+      // itself, so it stays on an opaque origin (no access to this app's
+      // cookies/storage/API) even when opened directly as its own tab — e.g.
+      // via a link in another deck. That's what makes it safe for the player
+      // to open same-origin /deep-dive-assets links in a new tab.
+      res.set('Content-Security-Policy', 'sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox');
       res.type('html').send(injectNavKeyShim(html));
     } catch (err) {
       if (err.code === 'ENOENT') return next();
