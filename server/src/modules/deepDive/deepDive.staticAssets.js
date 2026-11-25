@@ -23,6 +23,31 @@ addEventListener('message', function (e) {
     cancelable: true,
   }));
 });
+// The frame is sandboxed without allow-popups, so a link click (or the
+// deck's own window.open) can't open a new window from here — and a
+// cross-site page usually refuses to load inside the frame anyway. Hand
+// external links to the parent instead, which opens them in a new tab.
+// Same-origin / in-page links keep their normal in-frame behavior.
+document.addEventListener('click', function (e) {
+  var a = e.target && e.target.closest && e.target.closest('a[href]');
+  if (!a || !/^https?:$/.test(a.protocol) || a.origin === location.origin) return;
+  e.preventDefault();
+  window.parent.postMessage({ type: 'syncboard:open-link', url: a.href }, '*');
+}, true);
+// The sandboxed frame isn't allowed to go fullscreen itself, so the deck's
+// own fullscreen button / F key would silently fail. Route those requests
+// to the parent, which fullscreens the whole player (the click/keypress
+// inside the frame grants user activation to the parent too).
+(function () {
+  function forwardFullscreen() {
+    window.parent.postMessage({ type: 'syncboard:fullscreen' }, '*');
+    return Promise.resolve();
+  }
+  var proto = Element.prototype;
+  proto.requestFullscreen = forwardFullscreen;
+  proto.webkitRequestFullscreen = forwardFullscreen;
+  proto.webkitRequestFullScreen = forwardFullscreen;
+})();
 </script>
 `;
 

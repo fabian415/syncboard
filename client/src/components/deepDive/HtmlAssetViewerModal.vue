@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, onUnmounted, nextTick } from 'vue';
-import { X } from 'lucide-vue-next';
+import { X, Maximize } from 'lucide-vue-next';
 
 const props = defineProps({
   asset: { type: Object, default: null },
@@ -49,6 +49,16 @@ function forwardKeyToDeck(e) {
     if (!document.fullscreenElement) close();
     return;
   }
+  // F re-enters fullscreen (e.g. after coming back from a demo link that
+  // opened in a new tab). Handled here because a keypress on this page is
+  // the user activation requestFullscreen needs.
+  if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (!document.fullscreenElement) {
+      e.preventDefault();
+      enterFullscreen();
+    }
+    return;
+  }
   if (!NAV_KEYS.has(e.key)) return;
   // Let a focused button (e.g. the close button below) keep its native
   // Space/Enter activation instead of hijacking it as a slide-nav key.
@@ -58,6 +68,44 @@ function forwardKeyToDeck(e) {
   iframeRef.value.contentWindow.postMessage({ type: 'syncboard:key', key: e.key, code: e.code }, '*');
 }
 window.addEventListener('keydown', forwardKeyToDeck);
+
+// External link clicked inside the deck (forwarded by the server-injected
+// shim). Opened from this unsandboxed page rather than giving the frame
+// allow-popups(-to-escape-sandbox), which would let a deck script open
+// same-origin URLs outside the sandbox. Only cross-origin http(s) URLs are
+// accepted. The click inside the frame grants user activation to its
+// ancestors too, so this window.open isn't popup-blocked.
+//
+// Opening a tab knocks the browser out of fullscreen; flag it so
+// handleFullscreenChange keeps the deck open (as the fixed overlay) for
+// when the presenter comes back from the demo.
+let suppressFullscreenClose = false;
+function handleDeckMessage(e) {
+  if (!iframeRef.value || e.source !== iframeRef.value.contentWindow) return;
+  const data = e.data;
+  if (data?.type === 'syncboard:fullscreen') {
+    enterFullscreen();
+    return;
+  }
+  if (!data || data.type !== 'syncboard:open-link' || typeof data.url !== 'string') return;
+  let url;
+  try {
+    url = new URL(data.url);
+  } catch {
+    return;
+  }
+  if (!/^https?:$/.test(url.protocol) || url.origin === window.location.origin) return;
+  suppressFullscreenClose = true;
+  window.open(url.href, '_blank', 'noopener,noreferrer');
+}
+window.addEventListener('message', handleDeckMessage);
+
+function handleVisibilityChange() {
+  // Back on this tab: any fullscreen exit caused by the tab switch has
+  // fired by now, so let a later real Esc-exit close the deck again.
+  if (!document.hidden) setTimeout(() => { suppressFullscreenClose = false; }, 1000);
+}
+document.addEventListener('visibilitychange', handleVisibilityChange);
 
 watch(
   () => props.asset,
@@ -71,22 +119,37 @@ watch(
     // "ESC exits fullscreen" handling is intercepted at the UA level
     // before any page script sees it, so it fires regardless of which
     // frame currently holds keyboard focus.
-    try {
-      await rootRef.value?.requestFullscreen?.();
-    } catch {
-      // Fullscreen can be denied (no user-activation left, disabled by
-      // embedder policy, etc.) — the fixed inset-0 overlay below still
-      // covers the viewport, so playback isn't blocked either way.
-    }
+    await enterFullscreen();
   },
 );
 
+const isFullscreen = ref(false);
+
+async function enterFullscreen() {
+  if (document.fullscreenElement) return;
+  try {
+    await rootRef.value?.requestFullscreen?.();
+  } catch {
+    // Fullscreen can be denied (no user-activation left, disabled by
+    // embedder policy, etc.) — the fixed inset-0 overlay below still
+    // covers the viewport, so playback isn't blocked either way.
+  }
+}
+
 function handleFullscreenChange() {
-  if (!document.fullscreenElement && props.asset) emit('close');
+  isFullscreen.value = !!document.fullscreenElement;
+  if (document.fullscreenElement || !props.asset) return;
+  if (suppressFullscreenClose) {
+    suppressFullscreenClose = false;
+    return;
+  }
+  emit('close');
 }
 document.addEventListener('fullscreenchange', handleFullscreenChange);
 onUnmounted(() => {
   document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('message', handleDeckMessage);
   window.removeEventListener('keydown', forwardKeyToDeck);
 });
 
@@ -120,6 +183,14 @@ function close() {
       <span
         class="max-w-0 overflow-hidden whitespace-nowrap text-xs font-medium transition-all duration-200 group-hover:max-w-[280px] group-hover:pl-4"
       >{{ asset.originalName }}</span>
+      <button
+        v-if="!isFullscreen"
+        class="p-2 rounded-full hover:bg-white/15"
+        title="回到全螢幕(或按 F)"
+        @click="enterFullscreen"
+      >
+        <Maximize class="w-4 h-4" />
+      </button>
       <button class="p-2 rounded-full hover:bg-white/15" title="關閉(或按 Esc)" @click="close">
         <X class="w-4 h-4" />
       </button>
