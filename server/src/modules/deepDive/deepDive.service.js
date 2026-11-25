@@ -66,7 +66,7 @@ export function toPublicAsset(row) {
     status: row.status,
     originalName: row.originalName,
     mimeType: row.mimeType,
-    sizeBytes: row.sizeBytes,
+    sizeBytes: row.sizeBytes == null ? null : Number(row.sizeBytes),
     errorMessage: row.errorMessage,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -106,7 +106,7 @@ export async function createAssetRecord({ meetingDate, assetType, originalName, 
       originalName: originalName || `${assetId}.${ext}`,
       filePath: destPath,
       mimeType: mimeType || null,
-      sizeBytes: Number.isFinite(sizeBytes) ? sizeBytes : null,
+      sizeBytes: Number.isFinite(sizeBytes) ? BigInt(sizeBytes) : null,
     },
   });
 

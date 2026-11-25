@@ -130,7 +130,7 @@ model DeepDiveAsset {
   originalName String
   filePath     String
   mimeType     String?
-  sizeBytes    Int?
+  sizeBytes    BigInt?
   slideCount   Int?
   errorMessage String?
   createdAt    DateTime            @default(now())
